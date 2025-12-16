@@ -1,0 +1,8 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 6, in <module>
+    from torch import memory
+ImportError: cannot import name 'memory' from 'torch' (/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py)
+srun: error: nid007669: task 0: Exited with exit code 1
+srun: Terminating StepId=1057218.0

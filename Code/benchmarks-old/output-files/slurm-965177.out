@@ -1,0 +1,20 @@
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- qwen_generation_utils.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- cpp_kernels.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+- qwen_generation_utils.py
+- cpp_kernels.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+Downloading shards:   0%|          | 0/8 [00:00<?, ?it/s]slurmstepd: error: *** STEP 965177.0 ON nid007669 CANCELLED AT 2025-10-17T14:54:27 ***
+slurmstepd: error: *** JOB 965177 ON nid007669 CANCELLED AT 2025-10-17T14:54:27 ***

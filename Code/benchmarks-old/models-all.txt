@@ -1,0 +1,7 @@
+vgg19,image
+resnet50,image
+alexnet,image
+EleutherAI/gpt-j-6b,llm
+tiiuae/falcon-7b,llm
+baichuan-inc/Baichuan2-7B-Base,llm
+Qwen/Qwen-7B,llm

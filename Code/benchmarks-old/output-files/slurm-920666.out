@@ -1,0 +1,28 @@
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:03,  2.11it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:01<00:03,  1.84it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.77it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.74it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  1.73it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:01,  1.73it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:04<00:00,  1.54it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.83it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.77it/s]
+Both `max_new_tokens` (=512) and `max_length`(=1) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+--------
+model_loc: cpu, exec_loc: gpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  5.51it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:01,  4.94it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:01,  4.90it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  4.90it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:01<00:00,  4.89it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:01<00:00,  4.90it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  4.90it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.17it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.02it/s]
+Both `max_new_tokens` (=512) and `max_length`(=1) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Allocated memory: 29458.53MB
+Reserved memory: 29460.00MB
+--------
+model_loc: gpu, exec_loc: cpu
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  5.48it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:01,  5.41it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  5.40it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  5.41it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  5.42it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:01<00:00,  5.43it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  5.44it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.85it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.58it/s]
+Both `max_new_tokens` (=512) and `max_length`(=1) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** STEP 920666.0 ON nid007656 CANCELLED AT 2025-10-03T15:11:34 ***
+slurmstepd: error: *** JOB 920666 ON nid007656 CANCELLED AT 2025-10-03T15:11:34 ***

@@ -1,0 +1,100 @@
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:03,  1.78it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:01<00:03,  1.76it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.75it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.75it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  1.67it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:01,  1.57it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:04<00:00,  1.57it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.85it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.74it/s]
+Both `max_new_tokens` (=512) and `max_length`(=1) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+--------
+model_loc: cpu, exec_loc: gpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  5.88it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:01,  5.22it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  5.05it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  4.98it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  4.95it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:01<00:00,  4.93it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  4.92it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.28it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.13it/s]
+Both `max_new_tokens` (=512) and `max_length`(=1) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+Allocated memory: 29458.53MB
+Reserved memory: 29460.00MB
+--------
+model_loc: gpu, exec_loc: cpu
+Allocated memory: 32.00MB
+Reserved memory: 29498.00MB
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:01<00:11,  1.65s/it]Loading checkpoint shards:  25%|██▌       | 2/8 [00:03<00:11,  1.87s/it]Loading checkpoint shards:  38%|███▊      | 3/8 [00:06<00:11,  2.28s/it]Loading checkpoint shards:  50%|█████     | 4/8 [00:08<00:09,  2.32s/it]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:10<00:06,  2.22s/it]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:13<00:04,  2.33s/it]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:15<00:02,  2.30s/it]Loading checkpoint shards: 100%|██████████| 8/8 [00:16<00:00,  1.69s/it]Loading checkpoint shards: 100%|██████████| 8/8 [00:16<00:00,  2.00s/it]
+Both `max_new_tokens` (=512) and `max_length`(=1) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+Allocated memory: 32.00MB
+Reserved memory: 14764.00MB
+--------
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 283, in <module>
+    res = run_llm(model_loc=mode[0], exec_loc=mode[1], model_name=model_name)
+  File "/users/fbrunne/projects/benchmarks/run.py", line 239, in run_llm
+    output = model.generate(**input_batch, max_length=1)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1259, in generate
+    return super().generate(
+           ~~~~~~~~~~~~~~~~^
+        inputs,
+        ^^^^^^^
+    ...<7 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+  File "/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/utils.py", line 2255, in generate
+    result = self._sample(
+        input_ids,
+    ...<5 lines>...
+        **model_kwargs,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/utils.py", line 3257, in _sample
+    outputs = model_forward(**model_inputs, return_dict=True)
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1043, in forward
+    transformer_outputs = self.transformer(
+        input_ids,
+    ...<11 lines>...
+        return_dict=return_dict,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 891, in forward
+    outputs = block(
+        hidden_states,
+    ...<7 lines>...
+        output_attentions=output_attentions,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 610, in forward
+    attn_outputs = self.attn(
+        layernorm_output,
+    ...<5 lines>...
+        output_attentions=output_attentions,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 519, in forward
+    raise Exception(_ERROR_INPUT_CPU_QUERY_WITH_FLASH_ATTN_ACTIVATED)
+Exception: We detect you have activated flash attention support, but running model computation on CPU. Please make sure that your input data has been placed on GPU. If you actually want to run CPU computation, please following the readme and set device_map="cpu" to disable flash attention when loading the model (calling AutoModelForCausalLM.from_pretrained).
+检测到您的模型已激活了flash attention支持，但正在执行CPU运算任务。如使用flash attention，请您确认模型输入已经传到GPU上。如果您确认要执行CPU运算，请您在载入模型（调用AutoModelForCausalLM.from_pretrained）时，按照readme说法，指定device_map="cpu"以禁用flash attention。
+
+srun: error: nid007658: task 0: Exited with exit code 1
+srun: Terminating StepId=920499.0

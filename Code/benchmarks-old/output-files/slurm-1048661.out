@@ -1,0 +1,4 @@
+/usr/bin/bash: line 7: ./deps/patch-venv/bin/activate: No such file or directory
+/usr/bin/bash: line 8: ./deps/python311/bin/python3: No such file or directory
+srun: error: nid007658: task 0: Exited with exit code 127
+srun: Terminating StepId=1048661.0

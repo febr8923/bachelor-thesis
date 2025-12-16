@@ -1,0 +1,9 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 10, in <module>
+    class CudaMallocManagedAllocator(memory.Allocator):
+                                     ^^^^^^^^^^^^^^^^
+AttributeError: module 'torch.cuda.memory' has no attribute 'Allocator'
+srun: error: nid007666: task 0: Exited with exit code 1
+srun: Terminating StepId=1057376.0

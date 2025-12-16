@@ -1,0 +1,10 @@
+finished warm-up
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 293, in <module>
+    res = run_image(model_loc=mode[0], exec_loc=mode[1], model_name=model_name)
+  File "/users/fbrunne/projects/benchmarks/run.py", line 135, in run_image
+    if model is None:
+       ^^^^^
+UnboundLocalError: cannot access local variable 'model' where it is not associated with a value
+srun: error: nid007665: task 0: Exited with exit code 1
+srun: Terminating StepId=920822.0

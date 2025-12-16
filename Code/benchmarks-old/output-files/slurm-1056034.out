@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 7, in <module>
+    import torch
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/__init__.py", line 990, in <module>
+    raise ImportError(
+ImportError: Failed to load PyTorch C extensions:
+    It appears that PyTorch has loaded the `torch/_C` folder
+    of the PyTorch repository rather than the C extensions which
+    are expected in the `torch._C` namespace. This can occur when
+    using the `install` workflow. e.g.
+        $ python setup.py install && python -c "import torch"
+
+    This error can generally be solved using the `develop` workflow
+        $ python setup.py develop && python -c "import torch"  # This should succeed
+    or by running Python from a different directory.
+srun: error: nid007667: task 0: Exited with exit code 1
+srun: Terminating StepId=1056034.0

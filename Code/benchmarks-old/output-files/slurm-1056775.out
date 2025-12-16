@@ -1,0 +1,2 @@
+/var/spool/slurmd/job1056775/slurm_script: line 87: syntax error near unexpected token `torch.__file__'
+/var/spool/slurmd/job1056775/slurm_script: line 87: `    python3 -c "import torch; print(torch.__file__)"'

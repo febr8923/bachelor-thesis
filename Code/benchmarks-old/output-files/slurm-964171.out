@@ -1,0 +1,13 @@
+Using LD_LIBRARY_PATH=/users/fbrunne/miniconda3/envs/rmm_dev/lib:/user-environment/env/default/lib64:/user-environment/env/default/lib:/opt/cray/libfabric/1.15.2.0/lib64:/opt/cray/libfabric/1.15.2.0/lib:/user-environment/env/default/lib/python3.13/site-packages/faiss:/users/fbrunne/miniconda3/envs/rmm_dev/lib
+Using cache found in /capstor/scratch/cscs/fbrunne/hub/pytorch_vision_v0.10.0
+/user-environment/env/default/lib/python3.13/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/user-environment/env/default/lib/python3.13/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=AlexNet_Weights.IMAGENET1K_V1`. You can also use `weights=AlexNet_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+--------
+--------
+finished warm-up
+--------
+--------
+--------
+--------

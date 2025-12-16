@@ -1,0 +1,93 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/utils/hub.py:124: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Loading model Qwen/Qwen-7B...
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:02<00:14,  2.11s/it]Loading checkpoint shards:  25%|██▌       | 2/8 [00:04<00:12,  2.09s/it]Loading checkpoint shards:  38%|███▊      | 3/8 [00:06<00:10,  2.11s/it]Loading checkpoint shards:  50%|█████     | 4/8 [00:08<00:08,  2.23s/it]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:10<00:06,  2.10s/it]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:12<00:04,  2.18s/it]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:14<00:02,  2.01s/it]Loading checkpoint shards: 100%|██████████| 8/8 [00:16<00:00,  1.95s/it]Loading checkpoint shards: 100%|██████████| 8/8 [00:16<00:00,  2.05s/it]
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:497: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:509: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+Model loaded successfully
+model_loc: gpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+--------
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 131, in <module>
+    res = run_llm(model, tokenizer, model_loc=mode[0], exec_loc=mode[1])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 74, in run_llm
+    output = model.generate(**input_batch,  max_new_tokens=1, min_new_tokens=1, do_sample=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1259, in generate
+    return super().generate(
+           ^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 1576, in generate
+    result = self._greedy_search(
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 2494, in _greedy_search
+    outputs = self(
+              ^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1043, in forward
+    transformer_outputs = self.transformer(
+                          ^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 891, in forward
+    outputs = block(
+              ^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 610, in forward
+    attn_outputs = self.attn(
+                   ^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 432, in forward
+    query = apply_rotary_pos_emb(query, q_pos_emb)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1345, in apply_rotary_pos_emb
+    t_rot = (t_rot * cos) + (_rotate_half(t_rot) * sin)
+             ~~~~~~^~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+srun: error: nid007669: task 0: Exited with exit code 1
+srun: Terminating StepId=1060397.0

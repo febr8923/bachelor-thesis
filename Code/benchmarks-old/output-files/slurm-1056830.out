@@ -1,0 +1,129 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/utils/hub.py:124: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rotary fail, please install FlashAttention rotary to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/rotary
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+Warning: import flash_attn fail, please install FlashAttention to get higher efficiency https://github.com/Dao-AILab/flash-attention
+heyy
+model_loc: gpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:04,  1.41it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:01<00:03,  1.73it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.85it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.93it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  1.96it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:01,  1.99it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:03<00:00,  2.00it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  2.21it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  2.00it/s]
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rotary fail, please install FlashAttention rotary to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/rotary
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+Warning: import flash_attn fail, please install FlashAttention to get higher efficiency https://github.com/Dao-AILab/flash-attention
+--------
+heyy
+model_loc: gpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:04,  1.70it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:01<00:03,  1.89it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.96it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.99it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  2.01it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:00,  2.03it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:03<00:00,  2.03it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:03<00:00,  2.26it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:03<00:00,  2.08it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+--------
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  6.26it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:00,  6.11it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  6.07it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  6.07it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  6.07it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:00<00:00,  6.07it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  6.08it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  6.77it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  6.33it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+--------
+model_loc: cpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  6.67it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:00,  6.31it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  6.19it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  6.14it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  6.10it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:00<00:00,  6.08it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  6.06it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  6.69it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  6.36it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/utils.py:1510: UserWarning: You are calling .generate() with the `input_ids` being on a device type different than your model's device. `input_ids` is on cpu, whereas the model is on cuda. You may experience unexpected behaviors or slower generation. Please make sure that you have put `input_ids` to the correct device by calling for example input_ids = input_ids.to('cuda') before running `.generate()`.
+  warnings.warn(
+--------
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 126, in <module>
+    res = run_llm(model_loc=mode[0], exec_loc=mode[1], model_name=model_name)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 84, in run_llm
+    output = model.generate(**input_batch, max_length=10)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1259, in generate
+    return super().generate(
+           ^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 1622, in generate
+    result = self._sample(
+             ^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/utils.py", line 2791, in _sample
+    outputs = self(
+              ^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1043, in forward
+    transformer_outputs = self.transformer(
+                          ^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 822, in forward
+    inputs_embeds = self.wte(input_ids)
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/modules/sparse.py", line 190, in forward
+    return F.embedding(
+           ^^^^^^^^^^^^
+  File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/nn/functional.py", line 2551, in embedding
+    return torch.embedding(weight, input, padding_idx, scale_grad_by_freq, sparse)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! (when checking argument for argument index in method wrapper_CUDA__index_select)
+srun: error: nid007668: task 0: Exited with exit code 1
+srun: Terminating StepId=1056830.0

@@ -1,0 +1,20 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/utils/hub.py:124: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Loading model Qwen/Qwen-7B...
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:02<00:14,  2.13s/it]Loading checkpoint shards:  25%|██▌       | 2/8 [00:04<00:12,  2.15s/it]Loading checkpoint shards:  38%|███▊      | 3/8 [00:06<00:10,  2.12s/it]slurmstepd: error: *** STEP 1060394.0 ON nid007660 CANCELLED AT 2025-11-06T14:40:48 ***
+slurmstepd: error: *** JOB 1060394 ON nid007660 CANCELLED AT 2025-11-06T14:40:48 ***

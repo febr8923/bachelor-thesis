@@ -1,0 +1,8 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run-vllm.py", line 5, in <module>
+    from vllm import LLM, SamplingParams
+ModuleNotFoundError: No module named 'vllm'
+srun: error: nid007656: task 0: Exited with exit code 1
+srun: Terminating StepId=1093340.0

@@ -1,0 +1,33 @@
+Xformers is not installed correctly. If you want to use memory_efficient_attention to accelerate training use the following command to install Xformers
+pip install xformers.
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:03<00:03,  3.30s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:04<00:00,  2.25s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:04<00:00,  2.41s/it]
+/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/contextlib.py:109: FutureWarning: `torch.backends.cuda.sdp_kernel()` is deprecated. In the future, this context manager will be removed. Please see `torch.nn.attention.sdpa_kernel()` for the new context manager, with updated signature.
+  self.gen = func(*args, **kwds)
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+--------
+model_loc: cpu, exec_loc: gpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.81it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  2.00it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.97it/s]
+Allocated memory: 28633.02MB
+Reserved memory: 28634.00MB
+--------
+model_loc: gpu, exec_loc: cpu
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.80it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.28it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.19it/s]
+Allocated memory: 32.00MB
+Reserved memory: 28666.00MB
+--------
+model_loc: gpu, exec_loc: gpu
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.28it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.68it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.60it/s]
+Allocated memory: 28665.02MB
+Reserved memory: 28666.00MB
+--------

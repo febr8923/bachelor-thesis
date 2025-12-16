@@ -1,0 +1,94 @@
+Using LD_LIBRARY_PATH=/users/fbrunne/miniconda3/envs/rmm_dev/lib:/user-environment/env/default/lib64:/user-environment/env/default/lib:/opt/cray/libfabric/1.15.2.0/lib64:/opt/cray/libfabric/1.15.2.0/lib:/user-environment/env/default/lib/python3.13/site-packages/faiss:/users/fbrunne/miniconda3/envs/rmm_dev/lib
+/user-environment/env/default/lib/python3.13/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+model_loc: gpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:04,  1.74it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:01<00:03,  1.67it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.71it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.68it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  1.71it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:01,  1.74it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:04<00:00,  1.74it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.92it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.79it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+--------
+model_loc: gpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:03,  2.10it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:02,  2.04it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  2.03it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:01<00:01,  2.02it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  2.01it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:02<00:00,  2.01it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:03<00:00,  2.01it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:03<00:00,  2.22it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:03<00:00,  2.10it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+--------
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  5.88it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:01,  5.56it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  5.49it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  5.48it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  5.48it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:01<00:00,  5.48it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  5.48it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.97it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.68it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+--------
+model_loc: cpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  6.32it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:01,  5.71it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  5.57it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  5.52it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  5.51it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:01<00:00,  5.47it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  5.47it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.93it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.70it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+--------
+model_loc: gpu, exec_loc: cpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:01,  5.94it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:01,  5.59it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:00<00:00,  5.49it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00,  5.46it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:00<00:00,  5.47it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:01<00:00,  5.47it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:01<00:00,  5.49it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.98it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:01<00:00,  5.69it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+--------
+model_loc: gpu, exec_loc: gpu
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:03,  2.08it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:02,  2.01it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.99it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.99it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  1.98it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:01,  1.98it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:03<00:00,  1.98it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:03<00:00,  2.19it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:03<00:00,  2.06it/s]
+Both `max_new_tokens` (=512) and `max_length`(=10) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+--------

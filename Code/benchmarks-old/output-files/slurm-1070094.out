@@ -1,0 +1,104 @@
+Using LD_LIBRARY_PATH=/users/fbrunne/miniconda3/envs/rmm_dev/lib:/user-environment/env/default/lib64:/user-environment/env/default/lib:/opt/cray/libfabric/1.15.2.0/lib64:/opt/cray/libfabric/1.15.2.0/lib:/user-environment/env/default/lib/python3.13/site-packages/faiss:/users/fbrunne/miniconda3/envs/rmm_dev/lib
+/user-environment/env/default/lib/python3.13/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+The model is automatically converting to bf16 for faster inference. If you want to disable the automatic precision, please manually add bf16/fp16/fp32=True to "AutoModelForCausalLM.from_pretrained".
+Try importing flash-attention for faster inference...
+Warning: import flash_attn rms_norm fail, please install FlashAttention layer_norm to get higher efficiency https://github.com/Dao-AILab/flash-attention/tree/main/csrc/layer_norm
+Loading model Qwen/Qwen-7B...
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:00<00:00, 10.99it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:00<00:00, 11.24it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:00<00:00,  8.29it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:00<00:00,  9.79it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:00<00:00,  9.74it/s]
+/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/configuration_utils.py:633: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/configuration_utils.py:650: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/configuration_utils.py:633: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/configuration_utils.py:650: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+Model loaded successfully
+model_loc: gpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+--------
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 300, in <module>
+    res = run_llm(model=model, tokenizer=tokenizer, model_loc=mode[0], exec_loc=mode[1])
+  File "/users/fbrunne/projects/benchmarks/run.py", line 242, in run_llm
+    output = model.generate(**input_batch,  max_new_tokens=1, min_new_tokens=1, do_sample=False)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1259, in generate
+    return super().generate(
+           ~~~~~~~~~~~~~~~~^
+        inputs,
+        ^^^^^^^
+    ...<7 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+  File "/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/utils.py", line 2255, in generate
+    result = self._sample(
+        input_ids,
+    ...<5 lines>...
+        **model_kwargs,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/transformers/generation/utils.py", line 3254, in _sample
+    outputs = self(**model_inputs, return_dict=True)
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1043, in forward
+    transformer_outputs = self.transformer(
+        input_ids,
+    ...<11 lines>...
+        return_dict=return_dict,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 891, in forward
+    outputs = block(
+        hidden_states,
+    ...<7 lines>...
+        output_attentions=output_attentions,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 610, in forward
+    attn_outputs = self.attn(
+        layernorm_output,
+    ...<5 lines>...
+        output_attentions=output_attentions,
+    )
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 432, in forward
+    query = apply_rotary_pos_emb(query, q_pos_emb)
+  File "/users/fbrunne/.cache/huggingface/modules/transformers_modules/Qwen/Qwen-7B/ef3c5c9c57b252f3149c1408daf4d649ec8b6c85/modeling_qwen.py", line 1345, in apply_rotary_pos_emb
+    t_rot = (t_rot * cos) + (_rotate_half(t_rot) * sin)
+             ~~~~~~^~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+srun: error: nid007662: task 0: Exited with exit code 1
+srun: Terminating StepId=1070094.0

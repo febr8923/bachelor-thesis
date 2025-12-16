@@ -1,0 +1,7 @@
+Using LD_LIBRARY_PATH=/users/fbrunne/miniconda3/envs/rmm_dev/lib:/user-environment/env/default/lib64:/user-environment/env/default/lib:/opt/cray/libfabric/1.15.2.0/lib64:/opt/cray/libfabric/1.15.2.0/lib:/user-environment/env/default/lib/python3.13/site-packages/faiss:/users/fbrunne/miniconda3/envs/rmm_dev/lib
+  File "/users/fbrunne/projects/benchmarks/run.py", line 211
+    fp32=True
+         ^^^^
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+srun: error: nid007666: task 0: Exited with exit code 1
+srun: Terminating StepId=965375.0

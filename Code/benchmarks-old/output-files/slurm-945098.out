@@ -1,0 +1,38 @@
+Downloading: "https://github.com/pytorch/vision/zipball/v0.10.0" to /capstor/scratch/cscs/fbrunne/hub/v0.10.0.zip
+/user-environment/env/default/lib/python3.13/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/user-environment/env/default/lib/python3.13/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=AlexNet_Weights.IMAGENET1K_V1`. You can also use `weights=AlexNet_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Downloading: "https://download.pytorch.org/models/alexnet-owt-7be5be79.pth" to /capstor/scratch/cscs/fbrunne/hub/checkpoints/alexnet-owt-7be5be79.pth
+  0%|          | 0.00/233M [00:00<?, ?B/s]  8%|▊         | 19.2M/233M [00:00<00:01, 202MB/s] 26%|██▌       | 60.1M/233M [00:00<00:00, 335MB/s] 44%|████▍     | 102M/233M [00:00<00:00, 383MB/s]  62%|██████▏   | 144M/233M [00:00<00:00, 403MB/s] 79%|███████▉  | 185M/233M [00:00<00:00, 396MB/s] 97%|█████████▋| 226M/233M [00:00<00:00, 407MB/s]100%|██████████| 233M/233M [00:00<00:00, 388MB/s]
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Allocated memory: 234.03MB
+Reserved memory: 246.00MB
+--------
+Allocated memory: 265.46MB
+Reserved memory: 278.00MB
+Allocated memory: 266.03MB
+Reserved memory: 278.00MB
+--------
+finished warm-up
+Allocated memory: 265.46MB
+Reserved memory: 278.00MB
+Allocated memory: 32.00MB
+Reserved memory: 278.00MB
+--------
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Allocated memory: 266.03MB
+Reserved memory: 278.00MB
+--------
+Allocated memory: 265.46MB
+Reserved memory: 278.00MB
+Allocated memory: 32.00MB
+Reserved memory: 278.00MB
+--------
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Allocated memory: 266.03MB
+Reserved memory: 278.00MB
+--------

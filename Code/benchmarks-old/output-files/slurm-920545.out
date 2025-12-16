@@ -1,0 +1,18 @@
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:00<00:03,  2.16it/s]Loading checkpoint shards:  25%|██▌       | 2/8 [00:01<00:03,  1.90it/s]Loading checkpoint shards:  38%|███▊      | 3/8 [00:01<00:02,  1.77it/s]Loading checkpoint shards:  50%|█████     | 4/8 [00:02<00:02,  1.78it/s]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:02<00:01,  1.79it/s]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:03<00:01,  1.80it/s]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:03<00:00,  1.80it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  2.09it/s]Loading checkpoint shards: 100%|██████████| 8/8 [00:04<00:00,  1.92it/s]
+Both `max_new_tokens` (=512) and `max_length`(=20) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+Generated text: Hello, world!`;
+```
+This code creates a `stdClass` object with the specified properties and assigns it to the `$object` variable. The `print_r()` function is used to output the object properties.
+When you run this code, you should see the following output:
+```
+stdClass Object
+(
+    [name] => John
+    [age] => 30
+    [hobby] => Golf
+)
+```
+Note that the object properties are accessed using the object property syntax (`$object->name`, `$object->age`, etc.)
+/var/spool/slurmd/job920545/slurm_script: line 68: unexpected EOF while looking for matching `"'
+/var/spool/slurmd/job920545/slurm_script: line 69: syntax error: unexpected end of file

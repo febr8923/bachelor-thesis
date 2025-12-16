@@ -1,0 +1,42 @@
+Using cache found in /capstor/scratch/cscs/fbrunne/hub/pytorch_vision_v0.10.0
+/user-environment/env/default/lib/python3.13/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/user-environment/env/default/lib/python3.13/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=AlexNet_Weights.IMAGENET1K_V1`. You can also use `weights=AlexNet_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 273, in <module>
+    run_image(model_loc="gpu", exec_loc="gpu", model_name=model_name)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/projects/benchmarks/run.py", line 157, in run_image
+    model.to('cuda')
+    ~~~~~~~~^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1343, in to
+    return self._apply(convert)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 903, in _apply
+    module._apply(fn)
+    ~~~~~~~~~~~~~^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 903, in _apply
+    module._apply(fn)
+    ~~~~~~~~~~~~~^^^^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 930, in _apply
+    param_applied = fn(param)
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1329, in convert
+    return t.to(
+           ~~~~^
+        device,
+        ^^^^^^^
+        dtype if t.is_floating_point() or t.is_complex() else None,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        non_blocking,
+        ^^^^^^^^^^^^^
+    )
+    ^
+  File "/user-environment/env/default/lib/python3.13/site-packages/torch/cuda/__init__.py", line 319, in _lazy_init
+    torch._C._cuda_init()
+    ~~~~~~~~~~~~~~~~~~~^^
+RuntimeError: Unrecognized CachingAllocator option: use_uvm
+srun: error: nid007669: task 0: Exited with exit code 1
+srun: Terminating StepId=961004.0

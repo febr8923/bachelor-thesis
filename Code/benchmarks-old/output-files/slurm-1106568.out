@@ -1,0 +1,9 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/library_testing.py", line 5, in <module>
+    b = a.numpy()
+        ^^^^^^^^^
+RuntimeError: PyTorch was compiled without NumPy support
+srun: error: nid007669: task 0: Exited with exit code 1
+srun: Terminating StepId=1106568.0

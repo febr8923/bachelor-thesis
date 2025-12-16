@@ -1,0 +1,16 @@
+Using LD_LIBRARY_PATH=/users/fbrunne/miniconda3/envs/rmm_dev/lib:/user-environment/env/default/lib64:/user-environment/env/default/lib:/opt/cray/libfabric/1.15.2.0/lib64:/opt/cray/libfabric/1.15.2.0/lib:/user-environment/env/default/lib/python3.13/site-packages/faiss:/users/fbrunne/miniconda3/envs/rmm_dev/lib
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 9, in <module>
+    import rmm
+  File "/users/fbrunne/rmm/python/rmm/rmm/__init__.py", line 26, in <module>
+    from rmm import mr
+  File "/users/fbrunne/rmm/python/rmm/rmm/mr.py", line 14, in <module>
+    from rmm.pylibrmm.memory_resource import (
+    ...<32 lines>...
+    )
+  File "/users/fbrunne/rmm/python/rmm/rmm/pylibrmm/__init__.py", line 15, in <module>
+    from .device_buffer import DeviceBuffer
+  File "rmm/pylibrmm/device_buffer.pyx", line 1, in init rmm.pylibrmm.device_buffer
+ImportError: /user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/gcc-13.3.0-jiirevuiuw4kt4m5dyx4hhq4q3yr366a/lib64/libstdc++.so.6: version `CXXABI_1.3.15' not found (required by /users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/rmm/pylibrmm/memory_resource.cpython-313-aarch64-linux-gnu.so)
+srun: error: nid007661: task 0: Exited with exit code 1
+srun: Terminating StepId=964041.0

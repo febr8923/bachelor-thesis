@@ -1,0 +1,68 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+`torch_dtype` is deprecated! Use `dtype` instead!
+INFO 11-14 19:54:44 config.py:510] This model supports multiple tasks: {'generate', 'score', 'classify', 'reward', 'embed'}. Defaulting to 'generate'.
+INFO 11-14 19:54:44 llm_engine.py:234] Initializing an LLM engine (v0.6.6.post2.dev0+g2339d59f9.d20251114) with config: model='facebook/opt-125m', speculative_config=None, tokenizer='facebook/opt-125m', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.float16, max_seq_len=2048, download_dir=None, load_format=LoadFormat.AUTO, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, kv_cache_dtype=auto, quantization_param_path=None, device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='xgrammar'), observability_config=ObservabilityConfig(otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=0, served_model_name=facebook/opt-125m, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=False, chunked_prefill_enabled=False, use_async_output_proc=True, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":["vllm.unified_attention","vllm.unified_attention_with_output"],"candidate_compile_sizes":[],"compile_sizes":[],"capture_sizes":[256,248,240,232,224,216,208,200,192,184,176,168,160,152,144,136,128,120,112,104,96,88,80,72,64,56,48,40,32,24,16,8,4,2,1],"max_capture_size":256}, use_cached_outputs=False, 
+INFO 11-14 19:54:47 selector.py:120] Using Flash Attention backend.
+INFO 11-14 19:54:51 model_runner.py:1094] Starting to load model facebook/opt-125m...
+INFO 11-14 19:54:52 weight_utils.py:251] Using model weights format ['*.bin']
+Loading pt checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/model_executor/model_loader/weight_utils.py:450: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state = torch.load(bin_file, map_location="cpu")
+Loading pt checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  3.91it/s]
+Loading pt checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  3.91it/s]
+
+INFO 11-14 19:54:56 model_runner.py:1099] Loading model weights took 0.2389 GB
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/users/fbrunne/projects/benchmarks/run-vllm.py", line 4, in <module>
+[rank0]:     llm = LLM("facebook/opt-125m")
+[rank0]:           ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/utils.py", line 986, in inner
+[rank0]:     return fn(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/entrypoints/llm.py", line 230, in __init__
+[rank0]:     self.llm_engine = self.engine_class.from_engine_args(
+[rank0]:                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/engine/llm_engine.py", line 517, in from_engine_args
+[rank0]:     engine = cls(
+[rank0]:              ^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/engine/llm_engine.py", line 276, in __init__
+[rank0]:     self._initialize_kv_caches()
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/engine/llm_engine.py", line 416, in _initialize_kv_caches
+[rank0]:     self.model_executor.determine_num_available_blocks())
+[rank0]:     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/executor/gpu_executor.py", line 68, in determine_num_available_blocks
+[rank0]:     return self.driver_worker.determine_num_available_blocks()
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/worker/worker.py", line 202, in determine_num_available_blocks
+[rank0]:     self.model_runner.profile_run()
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/worker/model_runner.py", line 1322, in profile_run
+[rank0]:     model_input = self.prepare_model_input(
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/worker/model_runner.py", line 1599, in prepare_model_input
+[rank0]:     model_input = self._prepare_model_input_tensors(
+[rank0]:                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/worker/model_runner.py", line 1228, in _prepare_model_input_tensors
+[rank0]:     return builder.build()  # type: ignore
+[rank0]:            ^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/worker/model_runner.py", line 917, in build
+[rank0]:     attn_metadata = self.attn_metadata_builder.build(
+[rank0]:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/attention/backends/flash_attn.py", line 520, in build
+[rank0]:     block_tables = make_tensor_with_pad(
+[rank0]:                    ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/vllm/utils.py", line 752, in make_tensor_with_pad
+[rank0]:     tensor = torch.from_numpy(padded_x).to(device)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: RuntimeError: PyTorch was compiled without NumPy support
+[rank0]:[W1114 19:54:57.321199934 ProcessGroupNCCL.cpp:1250] Warning: WARNING: process group has NOT been destroyed before we destruct ProcessGroupNCCL. On normal program exit, the application should call destroy_process_group to ensure that any pending NCCL operations have finished in this process. In rare cases this process can exit before this point and block the progress of another member of the process group. This constraint has always been present,  but this warning has only been added since PyTorch 2.4 (function operator())
+srun: error: nid007658: task 0: Exited with exit code 1
+srun: Terminating StepId=1097980.0

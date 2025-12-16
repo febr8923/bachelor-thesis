@@ -1,0 +1,7 @@
+/usr/bin/bash: line 7: ./deps/patch-venv/bin/activate: No such file or directory
+  File "/users/fbrunne/projects/benchmarks/run-patch.py", line 10
+    from PIL import Imagegit submodule sync
+                             ^^^^^^^^^
+SyntaxError: invalid syntax
+srun: error: nid007669: task 0: Exited with exit code 1
+srun: Terminating StepId=1048111.0

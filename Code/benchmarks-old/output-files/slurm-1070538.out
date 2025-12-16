@@ -1,0 +1,70 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/utils/hub.py:124: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- tokenization_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- configuration_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/Qwen/Qwen-7B:
+- modeling_qwen.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+Your device support faster inference by passing bf16=True in "AutoModelForCausalLM.from_pretrained".
+Loading model Qwen/Qwen-7B...
+Loading checkpoint shards:   0%|          | 0/8 [00:00<?, ?it/s]Loading checkpoint shards:  12%|█▎        | 1/8 [00:02<00:16,  2.34s/it]Loading checkpoint shards:  25%|██▌       | 2/8 [00:05<00:17,  2.98s/it]Loading checkpoint shards:  38%|███▊      | 3/8 [00:07<00:12,  2.56s/it]Loading checkpoint shards:  50%|█████     | 4/8 [00:10<00:10,  2.50s/it]Loading checkpoint shards:  62%|██████▎   | 5/8 [00:12<00:06,  2.26s/it]Loading checkpoint shards:  75%|███████▌  | 6/8 [00:15<00:05,  2.78s/it]Loading checkpoint shards:  88%|████████▊ | 7/8 [00:17<00:02,  2.45s/it]Loading checkpoint shards: 100%|██████████| 8/8 [00:19<00:00,  2.18s/it]Loading checkpoint shards: 100%|██████████| 8/8 [00:19<00:00,  2.40s/it]
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:497: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:509: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+Model loaded successfully
+model_loc: cpu, exec_loc: cpu
+--------
+model_loc: cpu, exec_loc: cpu
+--------
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+--------
+model_loc: cpu, exec_loc: cpu
+--------
+model_loc: cpu, exec_loc: cpu
+--------
+model_loc: cpu, exec_loc: cpu
+--------
+model_loc: cpu, exec_loc: cpu
+--------
+model_loc: cpu, exec_loc: gpu
+--------
+model_loc: cpu, exec_loc: gpu
+--------
+model_loc: cpu, exec_loc: gpu
+--------
+model_loc: cpu, exec_loc: gpu
+--------
+model_loc: cpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: cpu
+--------
+model_loc: gpu, exec_loc: cpu
+--------
+model_loc: gpu, exec_loc: cpu
+--------
+model_loc: gpu, exec_loc: cpu
+--------
+model_loc: gpu, exec_loc: cpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------
+model_loc: gpu, exec_loc: gpu
+--------

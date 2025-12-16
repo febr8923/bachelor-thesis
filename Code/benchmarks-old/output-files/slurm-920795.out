@@ -1,0 +1,88 @@
+
+WARNING: You are currently loading Falcon using legacy code contained in the model repository. Falcon has now been fully ported into the Hugging Face transformers library. For the most up-to-date and high-performance version of the Falcon model code, please update to the latest version of transformers and then load the model without the trust_remote_code=True argument.
+
+finished warm-up
+model_loc: cpu, exec_loc: cpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+Loading checkpoint shards:  50%|█████     | 1/2 [00:02<00:02,  2.73s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:03<00:00,  1.79s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:03<00:00,  1.93s/it]
+Setting `pad_token_id` to `eos_token_id`:11 for open-end generation.
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+--------
+model_loc: cpu, exec_loc: gpu
+Allocated memory: 0.00MB
+Reserved memory: 0.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.92it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.15it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.11it/s]
+Setting `pad_token_id` to `eos_token_id`:11 for open-end generation.
+Allocated memory: 26465.18MB
+Reserved memory: 26538.00MB
+--------
+model_loc: gpu, exec_loc: cpu
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.97it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.57it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.45it/s]
+Setting `pad_token_id` to `eos_token_id`:11 for open-end generation.
+Allocated memory: 32.00MB
+Reserved memory: 26570.00MB
+--------
+model_loc: gpu, exec_loc: gpu
+Allocated memory: 32.00MB
+Reserved memory: 32.00MB
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.28it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.74it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.65it/s]
+Setting `pad_token_id` to `eos_token_id`:11 for open-end generation.
+Allocated memory: 26497.18MB
+Reserved memory: 27698.00MB
+--------
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 322, in <module>
+    df.to_csv(f"results/results-{model_name}.csv", mode='a', header=True, index=True)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+  File "/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/pandas/core/generic.py", line 3986, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        path_or_buf,
+        ^^^^^^^^^^^^
+    ...<14 lines>...
+        storage_options=storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/pandas/io/formats/format.py", line 1014, in to_csv
+    csv_formatter.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/pandas/io/formats/csvs.py", line 251, in save
+    with get_handle(
+         ~~~~~~~~~~^
+        self.filepath_or_buffer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        storage_options=self.storage_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as handles:
+    ^
+  File "/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/pandas/io/common.py", line 749, in get_handle
+    check_parent_directory(str(handle))
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/users/fbrunne/miniconda3/envs/rmm_dev/lib/python3.13/site-packages/pandas/io/common.py", line 616, in check_parent_directory
+    raise OSError(rf"Cannot save file into a non-existent directory: '{parent}'")
+OSError: Cannot save file into a non-existent directory: 'results/results-tiiuae'
+srun: error: nid007663: task 0: Exited with exit code 1
+srun: Terminating StepId=920795.0
+finished warm-up
+Traceback (most recent call last):
+  File "/users/fbrunne/projects/benchmarks/run.py", line 297, in <module>
+    raise ValueError("Invalid model type")
+ValueError: Invalid model type
+srun: error: nid007663: task 0: Exited with exit code 1
+srun: Terminating StepId=920795.1

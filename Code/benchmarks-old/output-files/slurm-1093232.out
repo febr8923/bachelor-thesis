@@ -1,0 +1,4 @@
+Python from: /users/fbrunne/projects/deps/python311/bin/python3
+/users/fbrunne/projects/deps/patch-venv/lib/python3.11/site-packages/torch/__init__.py
+srun: error: nid007658: task 0: Segmentation fault (core dumped)
+srun: Terminating StepId=1093232.0

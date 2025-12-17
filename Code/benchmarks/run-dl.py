@@ -94,6 +94,9 @@ if __name__ == "__main__":
     execution_loc = args.execution_location
     thread_percentage = args.thread_percentage
 
+    times_load = []
+    times_inference = []
+    times_total = []
     #warm-up
     if not is_cold_start:
         for i in range(NR_WARMUP_ITERATIONS):
@@ -101,14 +104,19 @@ if __name__ == "__main__":
 
         print("finished warm-up")
 
-    torch.cuda.empty_cache()
-    #measurements
-    times_load = []
-    times_inference = []
-    times_total = []
-    for i in range(NR_WARMUP_ITERATIONS):
-        res = run_image(model_loc=model_loc, exec_loc=execution_loc, model_name=model_name)
+        torch.cuda.empty_cache()
+        #measurements
 
+        for i in range(NR_ITERATIONS):
+            res = run_image(model_loc=model_loc, exec_loc=execution_loc, model_name=model_name)
+
+            times_load.append(res[0])
+            times_inference.append(res[1])
+            times_total.append(res[2])
+            torch.cuda.empty_cache()
+
+    else:
+        res = run_image(model_loc=model_loc, exec_loc=execution_loc, model_name=model_name)
         times_load.append(res[0])
         times_inference.append(res[1])
         times_total.append(res[2])
@@ -116,7 +124,7 @@ if __name__ == "__main__":
 
     n = len(times_load)
 
-    # Create DataFrame with just the values
+
     df = pd.DataFrame([
         sum(times_load) / n, max(times_load), min(times_load),
         sum(times_inference) / n, max(times_inference), min(times_inference),

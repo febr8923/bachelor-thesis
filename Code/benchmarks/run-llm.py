@@ -16,7 +16,7 @@ os.environ['TRANSFORMERS_CACHE'] = '/iopsstor/scratch/cscs/fbrunne'
 model = None
 
 def run_llm(model, tokenizer, model_loc: str, exec_loc: str):
-    print(f"model_loc: {model_loc}, exec_loc: {exec_loc}")
+    #print(f"model_loc: {model_loc}, exec_loc: {exec_loc}")
 
     # memory: {torch.cuda.memory_allocated() / (1024**2):.2f}MB")
     #print(f"Reserved memory: {torch.cuda.memory_reserved() / (1024**2):.2f}MB")
@@ -54,7 +54,7 @@ def run_llm(model, tokenizer, model_loc: str, exec_loc: str):
     
     #print(f"Allocated memory: {torch.cuda.memory_allocated() / (1024**2):.2f}MB")
     #print(f"Reserved memory: {torch.cuda.memory_reserved() / (1024**2):.2f}MB")
-    print("--------")
+    #print("--------")
         
     torch.cuda.synchronize()
     load_time = timer() - start
@@ -92,10 +92,17 @@ if __name__ == "__main__":
     execution_loc = args.execution_location
     thread_percentage = args.thread_percentage
 
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        trust_remote_code=True
+        #device_map="cpu" #device_map pins model to cpu (prevents .to() from working?)
+    )
+
     #warm-up
     if not is_cold_start:
         for i in range(NR_WARMUP_ITERATIONS):
-            run_llm(model_loc=model_loc, exec_loc=execution_loc, model_name=model_name)
+            run_llm(model = model, tokenizer=tokenizer,model_loc=model_loc, exec_loc=execution_loc)
 
         print("finished warm-up")
 
@@ -104,8 +111,8 @@ if __name__ == "__main__":
     times_load = []
     times_inference = []
     times_total = []
-    for i in range(NR_WARMUP_ITERATIONS):
-        res = run_llm(model_loc=model_loc, exec_loc=execution_loc, model_name=model_name)
+    for i in range(NR_ITERATIONS):
+        res = run_llm(model=model, tokenizer=tokenizer,model_loc=model_loc, exec_loc=execution_loc)
 
         times_load.append(res[0])
         times_inference.append(res[1])
@@ -114,7 +121,7 @@ if __name__ == "__main__":
 
     n = len(times_load)
 
-    # Create DataFrame with just the values
+
     df = pd.DataFrame([
         sum(times_load) / n, max(times_load), min(times_load),
         sum(times_inference) / n, max(times_inference), min(times_inference),

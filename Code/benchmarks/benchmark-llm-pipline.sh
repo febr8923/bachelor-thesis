@@ -57,5 +57,5 @@ for ((i=10; i<=100; i+=10)); do
   python run-llm.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="gpu" --thread_percentage="$i"
   python run-llm.py --model="$MODEL" --model_location="cpu" --cold_start --execution_location="gpu" --thread_percentage="$i"
 done
-python make-graph.py --model="$MODEL"
+python make-plot.py --model="$MODEL"
 echo quit | nvidia-cuda-mps-control

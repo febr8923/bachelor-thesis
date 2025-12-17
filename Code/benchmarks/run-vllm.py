@@ -37,9 +37,9 @@ if __name__ == "__main__":
         for i in range(NR_WARMUP_ITERATIONS):
             run_vllm(llm)
 
-        for i in range(NR_ITERATIONS):
-            res = run_vllm(llm)
-            times.append(res)
+    for i in range(NR_ITERATIONS):
+        res = run_vllm(llm)
+        times.append(res)
     
 
     n = len(times)

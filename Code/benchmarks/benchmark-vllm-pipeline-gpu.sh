@@ -22,7 +22,7 @@ cleanup() {
 trap cleanup EXIT
 
 # remove previous results:
-rm -rf "results/$MODEL"
+#rm -rf "results/$MODEL"
 
 # gpu
 
@@ -36,10 +36,8 @@ for ((i=10; i<=100; i+=10)); do
   export CUDA_MPS_ACTIVE_THREAD_PERCENTAGE="$i"
   #echo "$CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"
   python run-vllm.py --model="$MODEL" --model_location="gpu" --execution_location="gpu" --thread_percentage="$i"
-  python run-vllm.py --model="$MODEL" --model_location="cpu" --execution_location="gpu" --thread_percentage="$i"
 
   python run-vllm.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="gpu" --thread_percentage="$i"
-  python run-vllm.py --model="$MODEL" --model_location="cpu" --cold_start --execution_location="gpu" --thread_percentage="$i"
 done
-python make-plot.py --model="$MODEL"
+python make-plot.py --model="$MODEL" --vllm --gpu_only
 echo quit | nvidia-cuda-mps-control

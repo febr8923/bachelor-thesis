@@ -1,0 +1,7 @@
+vgg19,dl
+resnet50,dl
+alexnet,dl
+bert-large-uncased,dl
+
+EleutherAI/gpt-j-6b,llm
+meta-llama/Meta-Llama-3-8B-Instruct,llm

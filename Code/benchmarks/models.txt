@@ -4,4 +4,40 @@ alexnet,dl
 bert-large-uncased,dl
 
 EleutherAI/gpt-j-6b,llm
-meta-llama/Meta-Llama-3-8B-Instruct,llm
+meta-llama/Llama-3.1-8B,llm
+meta-llama/Llama-3.1-405B
+
+prompts:
+intel dataset (pytorch version)#
+multiple different sizes -> mulitipe lines for 4 different sizes, four lines in one graphic
+
+- add batch size
+
+model in 3d:
+memory requirement
+performance
+cost
+ - sm utilization
+ - how much memory
+ - load time
+
+plot on this 3d space
+
+2 cases:
+- different work loads and different comain
+- 2-3 analyze input  -> how does changing them 
+
+assumption
+ - sm b*memory
+ - how much memory is it using 
+
+1) for all application meansure
+    measure time for data movement
+    how much memory using (nvidia-smi; query interface); measure data points at every time. 
+    compute utilization (cpu: mpstat 1 (columns of cpu is used); gpu: )
+    performance
+    nr. of sms
+
+2) 
+
+3) vary batch-size

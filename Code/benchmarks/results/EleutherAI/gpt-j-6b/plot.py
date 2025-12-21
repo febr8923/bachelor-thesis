@@ -2,7 +2,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('gpu-memory-gpu-gpu-False-75.csv')
+df = pd.read_csv('gpu-4-memory.csv')
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 start_time = df['timestamp'].min()
@@ -33,7 +33,7 @@ plt.grid(True, alpha=0.3)
 plt.legend(title='Metrics', title_fontsize=11, fontsize=10)
 plt.tight_layout()
 
-plt.savefig('gpu_relative.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.savefig('gpu_relative.png', dpi=150, bbox_inches='tight', facecolor='white')
 
 # PLOT 2: Memory values (MB scale) - MAX values
 df_mem = df_grouped[['relative_time_s', 'mem_total_mb', 'mem_free_mb', 
@@ -54,5 +54,5 @@ plt.legend(title='Metrics', title_fontsize=11, fontsize=10)
 plt.tight_layout()
 
 # Save memory plot
-plt.savefig('gpu_absolute.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.savefig('gpu_absolute.png', dpi=150, bbox_inches='tight', facecolor='white')
 

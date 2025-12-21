@@ -9,6 +9,7 @@ fi
 
 export TRANSFORMERS_CACHE="$SCRATCH"
 export TORCH_HOME="$SCRATCH"
+export HF_HOME="$SCRATCH"
 export PYTHONWARNINGS=ignore
 
 pip install pandas
@@ -33,15 +34,6 @@ export CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps
 export CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log-$(id -un)
 nvidia-cuda-mps-control -d
 
-echo "gpu tests"
-#for ((i=10; i<=100; i+=10)); do
-#  echo "$i"
-#  export CUDA_MPS_ACTIVE_THREAD_PERCENTAGE="$i"
-#  python run-vllm.py --model="$MODEL" --model_location="gpu" --execution_location="gpu"  --thread_percentage="$i" --nr_input_tokens=20 --nr_input_tokens=20
-#  #python run-vllm.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="gpu" --thread_percentage="$i" --nr_input_tokens=20
-#done
-#python run-vllm.py --model="$MODEL" --model_location="gpu" --execution_location="gpu" --measure_memory --thread_percentage="25" --nr_input_tokens=20 --nr_input_tokens=20
-python run-vllm.py --model="$MODEL" --model_location="gpu" --execution_location="gpu" --measure_memory --thread_percentage="100" --nr_input_tokens=20 --nr_input_tokens=20
+python run-vllm.py --model="$MODEL" --mode=4 --measure_memory
 
-#python make-plot.py --model="$MODEL" --vllm --gpu_only
 echo quit | nvidia-cuda-mps-control

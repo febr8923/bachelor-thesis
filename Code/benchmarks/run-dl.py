@@ -125,11 +125,18 @@ if __name__ == "__main__":
     n = len(times_load)
 
 
-    df = pd.DataFrame([
-        sum(times_load) / n, max(times_load), min(times_load),
-        sum(times_inference) / n, max(times_inference), min(times_inference),
-        sum(times_total) / n, max(times_total), min(times_total)
-    ])
+    df = pd.DataFrame({
+        "avg_load_time": sum(times_load) / n,
+        "max_load_time": max(times_load),
+        "min_load_time": min(times_load),
+        "avg_inference_time": sum(times_inference) / n,
+        "max_inference_time": max(times_inference),
+        "min_inference_time": min(times_inference),
+        "avg_total_time": sum(times_total) / n,
+        "max_total_time": max(times_total),
+        "min_total_time": min(times_total)
+    })
+
 
     #csv_df_string = df.to_csv(index=False)
     #print(csv_df_string)

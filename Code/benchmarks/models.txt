@@ -41,3 +41,13 @@ assumption
 2) 
 
 3) vary batch-size
+
+
+What kind of plots?
+- Vary nr. of SMs and load & execution time
+    - 2 different scenarios gpu, cpu
+- Vary batch size (1,2,4,8,16,32,64,128,256,512) w. fixed input length (e.g. 128)
+    - 2 different scenarios gpu, cpu
+- Vary input length (128, 256, 512, 1024, 2048) w. fixed batch size (e.g. 4)
+    - 2 different scenarios gpu, cpu
+- Measure memory and utilization under different scenarios

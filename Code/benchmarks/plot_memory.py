@@ -2,7 +2,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('gpu-4-memory.csv')
+df = pd.read_csv('results/EleutherAI/gpt-j-6b/gpu-4-memory.csv')
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 start_time = df['timestamp'].min()
@@ -26,7 +26,7 @@ df_util = df_grouped[['relative_time_s', 'gpu_util%', 'mem_util%']].melt(
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_util, x='relative_time_s', y='value', hue='metric', 
              palette='Set1', linewidth=2.5, marker='o')
-plt.title('GPU Memory aggregated with max in %', fontsize=16, fontweight='bold')
+plt.title('GPU Memory/Util aggregated with max in %', fontsize=16, fontweight='bold')
 plt.xlabel('Time (seconds from start)', fontsize=12)
 plt.ylabel('Utilization %', fontsize=12)
 plt.grid(True, alpha=0.3)

@@ -17,8 +17,8 @@ NR_ITERATIONS = 5
 NR_WARMUP_ITERATIONS = 5
 DEFAULT_MEM_UTIL = 0.85
 DEFAULT_THREAD_PERCENTAGE = 100
-DEFAULT_NR_BATCHES = 4
-DEFAULT_NR_INPUT_TOKENS = 128
+DEFAULT_NR_BATCHES = 256
+DEFAULT_NR_INPUT_TOKENS = 2048
 
 class BenchmarkResult:
 
@@ -90,10 +90,10 @@ def make_prompt(nr_tokens, model_name, nr_batches=1):
     
     text_token_length = len(tokenizer.encode(text))
     token_text = text * (nr_tokens // text_token_length + 1)
-    tokens = tokenizer.encode(token_text)[:nr_tokens]
+    tokens = tokenizer.encode(token_text)[:(nr_tokens-1)]
     
     if len(tokens) < nr_tokens:
-        tokens += [tokenizer.pad_token_id] * (nr_tokens - len(tokens))
+        tokens += [tokenizer.pad_token_id] * (nr_tokens - len(tokens) - 1)
     
     one_batch = tokenizer.decode(tokens, skip_special_tokens=True)
     batches = [one_batch] * nr_batches
@@ -153,7 +153,6 @@ def benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= None):
     exec_loc = "gpu"
     model_loc = "gpu"
 
-    llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
     prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
     result = BenchmarkResult()
 
@@ -161,10 +160,12 @@ def benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= None):
         print(f"Percentage: {i}")
         try:
             os.environ['CUDA_MPS_ACTIVE_THREAD_PERCENTAGE'] = f"{i}"
+            llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES, 
                         thread_percentage=i, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
+
             del llm
             torch.cuda.empty_cache()
             gc.collect()
@@ -197,14 +198,11 @@ def benchmark_changing_batch_size(model_name, nr_outputs=128, watcher= None):
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=i, 
                         thread_percentage=DEFAULT_THREAD_PERCENTAGE, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
-            del llm
             torch.cuda.empty_cache()
             gc.collect()
             time.sleep(0.5)
         except Exception as e:
             print(f"Failed")
-            if 'llm' in locals():
-                del llm
             torch.cuda.empty_cache()
             gc.collect()
             continue
@@ -227,14 +225,12 @@ def benchmark_changing_input_length(model_name, nr_outputs=128, watcher= None):
             result.add_raw_result(result_i, nr_input_tokens=i, nr_batches=DEFAULT_NR_BATCHES, 
                         thread_percentage=DEFAULT_THREAD_PERCENTAGE, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
-            del llm
+            
             torch.cuda.empty_cache()
             gc.collect()
             time.sleep(0.5)
         except Exception as e:
             print(f"Failed")
-            if 'llm' in locals():
-                del llm
             torch.cuda.empty_cache()
             gc.collect()
             continue

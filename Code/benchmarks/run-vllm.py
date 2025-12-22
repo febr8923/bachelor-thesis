@@ -17,8 +17,8 @@ NR_ITERATIONS = 5
 NR_WARMUP_ITERATIONS = 5
 DEFAULT_MEM_UTIL = 0.85
 DEFAULT_THREAD_PERCENTAGE = 100
-DEFAULT_NR_BATCHES = 256
-DEFAULT_NR_INPUT_TOKENS = 2048
+DEFAULT_NR_BATCHES = 1
+DEFAULT_NR_INPUT_TOKENS = 20
 
 class BenchmarkResult:
 
@@ -146,8 +146,10 @@ def run_vllm_warm(llm, prompt, nr_output):
     
     return {"ttfts": ttfts, "throughputs": throughputs, "totals": totals}
 
-def benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= None):
+def gpu_benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= None):
+    print("")
     print("------ Running benchmark_changing_sm_percentage ------")
+    print("")
 
     cold_start = False
     exec_loc = "gpu"
@@ -181,14 +183,20 @@ def benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= None):
     
     return result
 
-def benchmark_changing_batch_size(model_name, nr_outputs=128, watcher= None):
+def benchmark_changing_batch_size(model_name, exec_loc="gpu", nr_outputs=128, watcher= None):
+    print("")
     print("------ Running benchmark_changing_batch_size ------")
+    print("")
 
-    llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
+    if exec_loc == "cpu":
+        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+        nr_outputs = 32
+    else:
+        llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
     result = BenchmarkResult()
     cold_start = False
-    exec_loc = "gpu"
-    model_loc = "gpu"
+    exec_loc = exec_loc
+    model_loc = exec_loc
     
     for i in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]:
         print(f"Size: {i}")
@@ -209,13 +217,19 @@ def benchmark_changing_batch_size(model_name, nr_outputs=128, watcher= None):
 
     return result
 
-def benchmark_changing_input_length(model_name, nr_outputs=128, watcher= None):
-    print("------ Running benchmark_changing_input_length ------")
-    llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
+def benchmark_changing_input_length(model_name, exec_loc="gpu", nr_outputs=128, watcher= None):
+    print("")
+    print("------ Running benchmark_changing_input_length ------")   
+    print("")
+    if exec_loc == "cpu":
+        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+        nr_outputs = 32
+    else:
+        llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
     result = BenchmarkResult()
     cold_start = False
-    exec_loc = "gpu"
-    model_loc = "gpu"
+    exec_loc = exec_loc
+    model_loc = exec_loc
 
     for i in [64, 128, 256, 512, 1024, 2048]:
         print(f"Length: {i}")
@@ -237,9 +251,11 @@ def benchmark_changing_input_length(model_name, nr_outputs=128, watcher= None):
 
     return result
 
-
-def benchmark_changing_gpu_memory_utilization(model_name, nr_outputs=128, watcher= None):
+def gpu_benchmark_changing_memory_utilization(model_name, nr_outputs=128, watcher= None):
+    print("")
     print("------ Running benchmark_changing_gpu_memory_utilization ------")
+    print("")
+
     prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=4)
     result = BenchmarkResult()
     cold_start = False
@@ -270,7 +286,47 @@ def benchmark_changing_gpu_memory_utilization(model_name, nr_outputs=128, watche
 
     return result
 
+def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=5, watcher=None):
+    print("")
+    print("------ Running cpu_benchmark_changing_nr_threads ------")
+    print("")
+
+    cold_start = False
+    exec_loc = "cpu"
+    model_loc = "cpu"
+    #VLLM_CPU_KVCACHE_SPACE=40 for 40GB KV cache size
+
+    prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
+    result = BenchmarkResult()
+
+    for i in [1, 2, 4, 8, 16, 36, 72]:
+        print(f"Nr threads: {i}")
+        try:
+            os.environ['OMP_NUM_THREADS'] = f"{i}"
+            os.environ['MKL_NUM_THREADS'] = f"{i}"
+
+            llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+            result_i = run_vllm_warm(llm, prompt, nr_outputs)
+            result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES, 
+                        thread_percentage=i, memory_rate=100, 
+                        cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
+
+            del llm
+            torch.cuda.empty_cache()
+            gc.collect()
+            time.sleep(0.5)
+        except Exception as e:
+            print(f"Failed with {e}")
+            if 'llm' in locals():
+                del llm
+            torch.cuda.empty_cache()
+            gc.collect()
+            continue
+    
+    return result
+
 def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
+    os.environ['VLLM_CPU_KVCACHE_SPACE'] = "20"
     nr_outputs = 128
     watcher = None
     dir_path = f"results/{model_name}"
@@ -284,47 +340,62 @@ def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
             watcher.start()
 
     if mode == 1:
-        res = benchmark_changing_sm_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        if execution_loc == "gpu":
+            res = gpu_benchmark_changing_sm_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        else:
+            res = cpu_benchmark_changing_nr_threads(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
     elif mode == 2:
-        res = benchmark_changing_batch_size(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        res = benchmark_changing_batch_size(model_name=model_name, exec_loc=execution_loc, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
     elif mode == 3:
-        res = benchmark_changing_input_length(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        res = benchmark_changing_input_length(model_name=model_name, exec_loc=execution_loc, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
     elif mode == 4:
-        res = benchmark_changing_gpu_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        if execution_loc == "gpu":
+            res = benchmark_changing_gpu_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        else:
+            raise ValueError("Benchmark not availble for cpu!")
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
     elif mode == 5:
-        res = benchmark_changing_sm_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        if execution_loc == "gpu":
+            res = gpu_benchmark_changing_sm_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        else:
+            res = cpu_benchmark_changing_thread_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-1")
-        res = benchmark_changing_batch_size(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+
+        res = benchmark_changing_batch_size(model_name=model_name, exec_loc=execution_loc, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-2")
-        res = benchmark_changing_input_length(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+
+        res = benchmark_changing_input_length(model_name=model_name, exec_loc=execution_loc, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-3")
-        res = benchmark_changing_gpu_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
-        res.save_to_csv(dir_path, f"{execution_loc}-4")
-    
+
+        if execution_loc == "gpu":
+            res = benchmark_changing_gpu_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+            res.save_to_csv(dir_path, f"{execution_loc}-4")
+
     if watcher:
         time.sleep(0.5)
         watcher.stop()
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str, required=True, help="Huggingface model name")
-parser.add_argument("--execution_location", type=str, default="gpu", help="cpu/gpu")
-parser.add_argument("--mode", type=int, default=5, help="Benchmark mode")
-parser.add_argument("--measure_memory", action="store_true", help="measure memory usage")
-parser.add_argument("--cold_start", action="store_true", help="Enable cold start")
 
-args = parser.parse_args()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, required=True, help="Huggingface model name")
+    parser.add_argument("--execution_location", type=str, default="gpu", help="cpu/gpu")
+    parser.add_argument("--mode", type=int, default=5, help="Benchmark mode")
+    parser.add_argument("--measure_memory", action="store_true", help="measure memory usage")
+    parser.add_argument("--cold_start", action="store_true", help="Enable cold start")
 
-model_name = args.model
-execution_loc = args.execution_location
-mode = args.mode
-measure_memory = args.measure_memory
-is_cold_start = args.cold_start
+    args = parser.parse_args()
 
-run(model_name, execution_loc=execution_loc, measure_memory=measure_memory, mode=mode)
+    model_name = args.model
+    execution_loc = args.execution_location
+    mode = args.mode
+    measure_memory = args.measure_memory
+    is_cold_start = args.cold_start
+
+    run(model_name, execution_loc=execution_loc, measure_memory=measure_memory, mode=mode)
 
 """
 if __name__ == "__main__":

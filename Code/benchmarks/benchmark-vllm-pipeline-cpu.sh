@@ -14,8 +14,17 @@ export PYTHONWARNINGS=ignore
 # remove previous results:
 #rm -rf "results/$MODEL"
 
-python run-vllm.py --model="$MODEL" --mode=1 --execution_location=cpu --measure_memory
-python run-vllm.py --model="$MODEL" --mode=2 --execution_location=cpu
-python run-vllm.py --model="$MODEL" --mode=3 --execution_location=cpu
+CPU_THREADS=(1 2 4 8 16 36 72)
+
+# cpu
+#echo "cpu tests"
+#for i in "${CPU_THREADS[@]}"; do
+#  echo "$i"
+#  export OMP_NUM_THREADS="$i"
+#  export MKL_NUM_THREADS="$i"
+#  
+#  python run-vllm.py --model="$MODEL" --execution_location="cpu"
+#done
+python run-vllm.py --model="$MODEL" --execution_location="cpu" --measure_memory
 
 #python make-plot.py --model="$MODEL" --vllm --cpu_only

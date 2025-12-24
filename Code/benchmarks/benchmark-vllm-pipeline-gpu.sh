@@ -35,9 +35,9 @@ export CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log-$(id -un)
 nvidia-cuda-mps-control -d
 
 python run-vllm.py --model="$MODEL" --mode=1 
-python run-vllm.py --model="$MODEL" --mode=2 
-python run-vllm.py --model="$MODEL" --mode=3
-python run-vllm.py --model="$MODEL" --mode=4 --measure_memory
+#python run-vllm.py --model="$MODEL" --mode=2 
+#python run-vllm.py --model="$MODEL" --mode=3
+#python run-vllm.py --model="$MODEL" --mode=4 --measure_memory
 
 
 echo quit | nvidia-cuda-mps-control

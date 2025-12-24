@@ -3,6 +3,9 @@ import threading
 import csv
 import time
 from datetime import datetime
+import psutil
+import logging
+from pathlib import Path
 
 class GpuWatcher:
     def __init__(self, gpu_id, save_loc):
@@ -80,51 +83,63 @@ class GpuWatcher:
         
         self.watcher = None
 
+
 class CpuWatcher:
-    def __init__(self, id, save_loc):
+    def __init__(self, id: int, save_loc: str, interval: float = 1.0):
         self.id = id
+        self.save_loc = Path(save_loc)
+        self.csv_file = self.save_loc
         self.running = False
         self.watcher = None
-        self.save_loc = save_loc
+        self.interval = interval
+        self._lock = threading.Lock()
+        self._first_row = True
+        # Setup logging
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger(f"CpuWatcher_{id}")
 
     def track_cpu(self):
-        cmd_util = ['top', "-bn1"]
-        cmd_mem = ['free', "--si", "--bytes"]
+        """Efficiently track CPU and memory usage using psutil."""
         while self.running:
             try:
-                cpu_line = subprocess.check_output(["top", "-bn1"]).decode().splitlines()[7]
-                idle = float(cpu_line.split('%id')[0].split(',')[-1].strip('%'))
-                cpu_util = 100 - idle
-
-                mem_line = subprocess.check_output(["free", "--si", "--bytes"]).decode().splitlines()[1]
-                mem_parts = mem_line.split()
-                mem_total, mem_used, mem_free = map(int, [mem_parts[1], mem_parts[2], mem_parts[3]])
-
-
-
+                # Get CPU usage (requires interval for accurate %)
+                cpu_util = psutil.cpu_percent(interval=None)
+                
+                # Get memory info
+                mem = psutil.virtual_memory()
+                mem_total = mem.total
+                mem_used = mem.used
+                mem_free = mem.available  # Use available instead of free for accuracy
+                
                 timestamp = datetime.now().isoformat()
-                with open(self.csv_file, 'a', newline='') as f:
+                
+                with self._lock:
+                    with self.csv_file.open('a', newline='') as f:
                         writer = csv.writer(f)
-                        if first_row:
+                        if self._first_row:
                             writer.writerow(['timestamp', 'cpu_util_pct', 'mem_total_bytes', 
-                                        'mem_used_bytes', 'mem_free_bytes'])
-                            first_row = False
+                                           'mem_used_bytes', 'mem_available_bytes'])
+                            self._first_row = False
                         writer.writerow([timestamp, cpu_util, mem_total, mem_used, mem_free])
+                
+                self.logger.debug(f"Logged: CPU={cpu_util:.1f}%, Mem={mem_used/1e9:.1f}GB used")
+                
             except Exception as e:
-                pass
-
-            time.sleep(0.1)
+                self.logger.error(f"Error collecting metrics: {e}")
+            
+            time.sleep(self.interval)
     
     def start(self):
         if not self.running:
             self.running = True
             self.watcher = threading.Thread(target=self.track_cpu, daemon=True)
             self.watcher.start()
-
+            self.logger.info(f"Started CPU watcher {self.id} (interval: {self.interval}s)")
+    
     def stop(self):
-        self.running = False
-        
-        if self.watcher:
-            self.watcher.join()
-        
-        self.watcher = None
+        if self.running:
+            self.running = False
+            if self.watcher and self.watcher.is_alive():
+                self.watcher.join(timeout=2.0)
+            self.watcher = None
+            self.logger.info(f"Stopped CPU watcher {self.id}")

@@ -15,6 +15,7 @@ import gc
 
 NR_ITERATIONS = 5
 NR_WARMUP_ITERATIONS = 5
+
 DEFAULT_MEM_UTIL = 0.85
 DEFAULT_THREAD_PERCENTAGE = 100
 DEFAULT_NR_BATCHES = 1
@@ -101,6 +102,7 @@ def make_prompt(nr_tokens, model_name, nr_batches=1):
 
 def run_vllm_iteration(llm, prompt, nr_output):
     sampling_params = SamplingParams(max_tokens=nr_output, temperature=0)
+
     start = timer()
     outputs = llm.generate(prompt, sampling_params)
     end = timer()
@@ -286,7 +288,7 @@ def gpu_benchmark_changing_memory_utilization(model_name, nr_outputs=128, watche
 
     return result
 
-def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=5, watcher=None):
+def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=32, watcher=None):
     print("")
     print("------ Running cpu_benchmark_changing_nr_threads ------")
     print("")
@@ -294,18 +296,23 @@ def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=5, watcher=None):
     cold_start = False
     exec_loc = "cpu"
     model_loc = "cpu"
-    #VLLM_CPU_KVCACHE_SPACE=40 for 40GB KV cache size
+    nr_outputs = 32
+
+    #llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+
 
     prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
     result = BenchmarkResult()
 
-    for i in [1, 2, 4, 8, 16, 36, 72]:
+    for i in [16, 36, 72]:
         print(f"Nr threads: {i}")
+        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
         try:
             os.environ['OMP_NUM_THREADS'] = f"{i}"
             os.environ['MKL_NUM_THREADS'] = f"{i}"
 
             llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES, 
                         thread_percentage=i, memory_rate=100, 
@@ -326,7 +333,7 @@ def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=5, watcher=None):
     return result
 
 def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
-    os.environ['VLLM_CPU_KVCACHE_SPACE'] = "20"
+    os.environ['VLLM_CPU_KVCACHE_SPACE'] = "16"
     nr_outputs = 128
     watcher = None
     dir_path = f"results/{model_name}"
@@ -395,7 +402,66 @@ if __name__ == '__main__':
     measure_memory = args.measure_memory
     is_cold_start = args.cold_start
 
-    run(model_name, execution_loc=execution_loc, measure_memory=measure_memory, mode=mode)
+    if execution_loc == "gpu":
+        run(model_name, execution_loc=execution_loc, measure_memory=measure_memory, mode=mode)
+    elif execution_loc == "cpu":
+        ttfts = []
+        throughputs = []
+        totals = []
+        dir_path = f"results/{model_name}"
+
+        if measure_memory:
+            watcher = CpuWatcher(id=0, save_loc=f"{dir_path}/cpu-{mode}-memory.csv")
+            watcher.start()
+        
+        prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
+        llm = LLM(model_name, max_num_batched_tokens=12048, max_model_len=12048)
+        nr_output = 16
+
+        for i in range(NR_WARMUP_ITERATIONS):
+                run_vllm_iteration(llm, prompt, nr_output)
+
+        for i in range(NR_ITERATIONS):
+            res = run_vllm_iteration(llm, prompt, nr_output)
+            ttfts.append(res["ttft"])
+            throughputs.append(res["throughput"])
+            totals.append(res["total"])
+            #
+        
+        if measure_memory:
+            watcher.stop()
+        """
+        DEFAULT_MEM_UTIL = 0.85
+        DEFAULT_THREAD_PERCENTAGE = 100
+        DEFAULT_NR_BATCHES = 1
+        DEFAULT_NR_INPUT_TOKENS = 20
+        """
+        n = len(ttfts)
+        df = pd.DataFrame({
+            "nr_input_tokens": [DEFAULT_NR_INPUT_TOKENS],
+            "nr_batches": [DEFAULT_NR_BATCHES],
+            "thread_percentage": [DEFAULT_THREAD_PERCENTAGE],
+            "memory_rate": [DEFAULT_MEM_UTIL],
+            "cold_start": [is_cold_start],
+            "model_loc": [execution_loc],
+            "exec_loc": [execution_loc],
+            "avg_ttft": [sum(ttfts) / n],
+            "max_ttft": [max(ttfts)],
+            "min_ttft": [min(ttfts)],
+            "avg_throughput": [sum(throughputs) / n],
+            "max_throughput": [max(throughputs)],
+            "min_throughput": [min(throughputs)],
+            "avg_total": [sum(totals) / n],
+            "max_total": [max(totals)],
+            "min_total": [min(totals)],
+        })
+
+        dir_path = f"results/{model_name}"
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        file_path = f"{dir_path}/{execution_loc}-{mode}-{is_cold_start}.csv"
+        df.to_csv(file_path, mode='a', header=False, index=False)
 
 """
 if __name__ == "__main__":

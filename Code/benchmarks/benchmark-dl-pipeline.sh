@@ -33,11 +33,11 @@ for i in "${CPU_THREADS[@]}"; do
   export OMP_NUM_THREADS="$i"
   export MKL_NUM_THREADS="$i"
   
-  python run-dl.py --model="$MODEL" --model_location="cpu" --execution_location="cpu" --thread_percentage="$i"
-  python run-dl.py --model="$MODEL" --model_location="gpu" --execution_location="cpu" --thread_percentage="$i"
+  python run-dl-clean.py --model="$MODEL" --model_location="cpu" --execution_location="cpu" --measure_memory --mode=1
+  python run-dl-clean.py --model="$MODEL" --model_location="gpu" --execution_location="cpu" --mode=1
   
-  python run-dl.py --model="$MODEL" --model_location="cpu" --cold_start --execution_location="cpu" --thread_percentage="$i"
-  python run-dl.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="cpu" --thread_percentage="$i"
+  python run-dl-clean.py --model="$MODEL" --model_location="cpu" --cold_start --execution_location="cpu" --mode=1 --measure_memory
+  python run-dl-clean.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="cpu" --mode=1
 done
 
 # gpu
@@ -51,11 +51,11 @@ for ((i=10; i<=100; i+=10)); do
   echo "$i"
   export CUDA_MPS_ACTIVE_THREAD_PERCENTAGE="$i"
   #echo "$CUDA_MPS_ACTIVE_THREAD_PERCENTAGE"
-  python run-dl.py --model="$MODEL" --model_location="gpu" --execution_location="gpu" --thread_percentage="$i"
-  python run-dl.py --model="$MODEL" --model_location="cpu" --execution_location="gpu" --thread_percentage="$i"
+  python run-dl-clean.py --model="$MODEL" --model_location="gpu" --execution_location="gpu" --mode=1 --measure_memory
+  python run-dl-clean.py --model="$MODEL" --model_location="cpu" --execution_location="gpu" --mode=1
 
-  python run-dl.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="gpu" --thread_percentage="$i"
-  python run-dl.py --model="$MODEL" --model_location="cpu" --cold_start --execution_location="gpu" --thread_percentage="$i"
+  python run-dl-clean.py --model="$MODEL" --model_location="gpu" --cold_start --execution_location="gpu" --mode=1 --measure_memory
+  python run-dl-clean.py --model="$MODEL" --model_location="cpu" --cold_start --execution_location="gpu" --mode=1
 done
-python make-plot.py --model="$MODEL"
+#python make-plot.py --model="$MODEL"
 echo quit | nvidia-cuda-mps-control

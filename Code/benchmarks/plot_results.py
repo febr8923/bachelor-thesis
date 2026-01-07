@@ -15,7 +15,7 @@ def plot_results(csv_file, output_dir="plots"):
     #sns.set_palette("husl")
 
     #y_params = ['nr_input_tokens', 'nr_batches', 'thread_percentage', 'memory_rate']
-    y_params = ['thread_percentage']
+    y_params = ['memory_rate']
     x_params = ['avg_throughput', 'avg_total']
 
 

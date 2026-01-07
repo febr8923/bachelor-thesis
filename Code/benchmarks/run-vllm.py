@@ -148,6 +148,7 @@ def run_vllm_warm(llm, prompt, nr_output):
     
     return {"ttfts": ttfts, "throughputs": throughputs, "totals": totals}
 
+
 def gpu_benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= None):
     print("")
     print("------ Running benchmark_changing_sm_percentage ------")
@@ -166,6 +167,10 @@ def gpu_benchmark_changing_sm_percentage(model_name, nr_outputs=128, watcher= No
             os.environ['CUDA_MPS_ACTIVE_THREAD_PERCENTAGE'] = f"{i}"
             llm = LLM(model_name, gpu_memory_utilization=DEFAULT_MEM_UTIL)
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
+            result_i_ttft = run_vllm_warm(llm, prompt, 1)
+
+            result_i["ttfts"] = result_i_ttft["ttfts"]
+
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES, 
                         thread_percentage=i, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
@@ -205,6 +210,10 @@ def benchmark_changing_batch_size(model_name, exec_loc="gpu", nr_outputs=128, wa
         try:
             prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=i)
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
+            result_i_ttft = run_vllm_warm(llm, prompt, 1)
+
+            result_i["ttfts"] = result_i_ttft["ttfts"]
+
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=i, 
                         thread_percentage=DEFAULT_THREAD_PERCENTAGE, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
@@ -238,6 +247,9 @@ def benchmark_changing_input_length(model_name, exec_loc="gpu", nr_outputs=128, 
         try:
             prompt = make_prompt(nr_tokens=i, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
+            result_i_ttft = run_vllm_warm(llm, prompt, 1)
+
+            result_i["ttfts"] = result_i_ttft["ttfts"]
             result.add_raw_result(result_i, nr_input_tokens=i, nr_batches=DEFAULT_NR_BATCHES, 
                         thread_percentage=DEFAULT_THREAD_PERCENTAGE, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
@@ -270,6 +282,9 @@ def gpu_benchmark_changing_memory_utilization(model_name, nr_outputs=128, watche
         try:
             llm = LLM(model_name, gpu_memory_utilization=util)
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
+            result_i_ttft = run_vllm_warm(llm, prompt, 1)
+
+            result_i["ttfts"] = result_i_ttft["ttfts"]
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES,
                       thread_percentage=DEFAULT_THREAD_PERCENTAGE, memory_rate=util,
                       cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
@@ -288,6 +303,10 @@ def gpu_benchmark_changing_memory_utilization(model_name, nr_outputs=128, watche
 
     return result
 
+
+"""
+Doesnt work bc of threading issues
+"""
 def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=32, watcher=None):
     print("")
     print("------ Running cpu_benchmark_changing_nr_threads ------")
@@ -415,7 +434,7 @@ if __name__ == '__main__':
             watcher.start()
         
         prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
-        llm = LLM(model_name, max_num_batched_tokens=12048, max_model_len=12048)
+        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
         nr_output = 16
 
         for i in range(NR_WARMUP_ITERATIONS):

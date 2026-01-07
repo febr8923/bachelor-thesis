@@ -2,22 +2,13 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('results/EleutherAI/gpt-j-6b/cpu-5-memory.csv')
+df = pd.read_csv('results/alexnet/gpu-1-memory.csv')
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 start_time = df['timestamp'].min()
 df['relative_time_s'] = (df['timestamp'] - start_time).dt.total_seconds()
 
-df_grouped = df.groupby('relative_time_s').agg({
-    'gpu_util%': 'max',
-    'mem_util%': 'max',
-    'mem_total_mb': 'max',
-    'mem_free_mb': 'max', 
-    'mem_used_mb': 'max',
-    'mem_reserved_mb': 'max'
-}).reset_index()
-
-df_util = df_grouped[['relative_time_s', 'gpu_util%', 'mem_util%']].melt(
+df_util = df[['relative_time_s', 'gpu_util%', 'mem_util%']].melt(
     id_vars='relative_time_s', 
     value_vars=['gpu_util%', 'mem_util%'],
     var_name='metric', value_name='value'
@@ -25,7 +16,7 @@ df_util = df_grouped[['relative_time_s', 'gpu_util%', 'mem_util%']].melt(
 
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_util, x='relative_time_s', y='value', hue='metric', 
-             palette='Set1', linewidth=2.5, marker='o')
+             palette='Set1', linewidth=1.5)
 plt.title('GPU/Memory util aggregated with max in %', fontsize=16, fontweight='bold')
 plt.xlabel('Time (seconds from start)', fontsize=12)
 plt.ylabel('Utilization %', fontsize=12)
@@ -35,8 +26,8 @@ plt.tight_layout()
 
 plt.savefig('gpu_relative.png', dpi=150, bbox_inches='tight', facecolor='white')
 
-# PLOT 2: Memory values (MB scale) - MAX values
-df_mem = df_grouped[['relative_time_s', 'mem_total_mb', 'mem_free_mb', 
+# PLOT 2: Memory values (MB scale)
+df_mem = df[['relative_time_s', 'mem_total_mb', 'mem_free_mb', 
                      'mem_used_mb', 'mem_reserved_mb']].melt(
     id_vars='relative_time_s', 
     value_vars=['mem_total_mb', 'mem_free_mb', 'mem_used_mb', 'mem_reserved_mb'],
@@ -45,7 +36,7 @@ df_mem = df_grouped[['relative_time_s', 'mem_total_mb', 'mem_free_mb',
 
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_mem, x='relative_time_s', y='value', hue='metric', 
-             palette='Set2', linewidth=2.5, marker='o')
+             palette='Set2', linewidth=1.5)
 plt.title('GPU Memory aggregated with max', fontsize=16, fontweight='bold')
 plt.xlabel('Time (seconds from start)', fontsize=12)
 plt.ylabel('Memory (MB)', fontsize=12)

@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Read the new CSV format
-df = pd.read_csv('results/meta-llama/Llama-3.1-8B/cpu-5-memory.csv')  # Update filename as needed
+df = pd.read_csv('results/alexnet/cpu-1-memory.csv')
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 # Calculate relative time and derived metrics

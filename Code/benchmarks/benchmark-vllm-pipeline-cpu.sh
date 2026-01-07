@@ -25,6 +25,12 @@ CPU_THREADS=(1 2 4 8 16 36 72)
 #  
 #  python run-vllm.py --model="$MODEL" --execution_location="cpu"
 #done
-python run-vllm.py --model="$MODEL" --execution_location="cpu" --measure_memory
+
+#KV_SIZE=(4 8 16 32 64 96 128)
+#for in in "${KV_SIZE[@]}"; do
+#  
+#  python run-vllm.py --model="$MODEL" --execution_location="cpu" --measure_memory --mode="6"
+#
+#done
 
 #python make-plot.py --model="$MODEL" --vllm --cpu_only

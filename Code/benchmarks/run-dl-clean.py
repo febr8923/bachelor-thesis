@@ -3,31 +3,19 @@ import os
 from PIL import Image
 from torchvision import transforms
 from timeit import default_timer as timer
-import sys
-import itertools
 import pandas as pd
-from transformers import AutoConfig, AutoModel, AutoTokenizer, AutoModelForCausalLM
 import argparse
 from watcher import GpuWatcher
 from watcher import CpuWatcher
 
-#mode can be 1 (CPU,CPU), 2 (CPU,GPU), 3 (GPU,CPU), 4 (GPU,GPU) for (model location, execution location)
-#model should be on gpu/cpu, execution should be on gpu/cpu 
-import gc
-import time
 os.environ['TRANSFORMERS_CACHE'] = '/iopsstor/scratch/cscs/fbrunne'
 
 NR_ITERATIONS = 5
 NR_WARMUP_ITERATIONS = 5
 
-DEFAULT_MEM_UTIL = 0.85
-DEFAULT_THREAD_PERCENTAGE = 100
-DEFAULT_NR_BATCHES = 1
-DEFAULT_NR_INPUT_TOKENS = 20
-
 
 def run_image_iteration(model_loc: str, exec_loc: str, model):
-
+    """Run a single inference iteration on an image."""
     # Preprocess the input image
     input_image = Image.open('dog.jpg')
     preprocess = transforms.Compose([
@@ -38,15 +26,13 @@ def run_image_iteration(model_loc: str, exec_loc: str, model):
     ])
 
     input_tensor = preprocess(input_image)
-    input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
+    input_batch = input_tensor.unsqueeze(0)
 
-    #print(f"Allocated memory: {torch.cuda.memory_allocated() / (1024**2):.2f}MB")
-    #print(f"Reserved memory: {torch.cuda.memory_reserved() / (1024**2):.2f}MB")
-
-    if(model_loc == "cpu"):#start with model on cpu execution on cpu
+    # Move model and data to initial location
+    if model_loc == "cpu":
         model.to('cpu')
         input_batch = input_batch.to('cpu')
-    elif(model_loc == "gpu"):
+    elif model_loc == "gpu":
         model.to('cuda')
         input_batch = input_batch.to('cuda')
     else:
@@ -54,22 +40,20 @@ def run_image_iteration(model_loc: str, exec_loc: str, model):
 
     start = timer()
 
-    if(exec_loc == "cpu"):
+    # Move to execution location
+    if exec_loc == "cpu":
         model.to('cpu')
         input_batch = input_batch.to('cpu')
-    elif(exec_loc == "gpu"):
+    elif exec_loc == "gpu":
         model.to("cuda")
         input_batch = input_batch.to("cuda")
     else:
         raise ValueError(f"Wrong exec_loc, found {exec_loc}, should be 'cpu' or 'gpu'")
 
-    #print(f"Allocated memory: {torch.cuda.memory_allocated() / (1024**2):.2f}MB")
-    #print(f"Reserved memory: {torch.cuda.memory_reserved() / (1024**2):.2f}MB")
-    #print("--------")
-
     torch.cuda.synchronize()
     load_time = timer() - start
 
+    # Run inference
     model.eval()
     with torch.no_grad():
         model(input_batch)
@@ -82,19 +66,20 @@ def run_image_iteration(model_loc: str, exec_loc: str, model):
     total = inference_time + load_time
     return [load_time, inference_time, total]
 
-def run_image_warm(model_loc, exec_loc, model, model_name):
-    if model is None:
-        model = torch.hub.load('pytorch/vision:v0.10.0', model_name, pretrained=True)
+
+def run_image_warm(model_loc: str, exec_loc: str, model, model_name: str):
+    """Run warm inference with warmup iterations."""
     times_load = []
     times_inference = []
     times_total = []
 
+    # Warmup iterations
     for i in range(NR_WARMUP_ITERATIONS):
         run_image_iteration(model_loc=model_loc, exec_loc=exec_loc, model=model)
+    
+    # Measurement iterations
     for i in range(NR_ITERATIONS):
-        
         res = run_image_iteration(model_loc=model_loc, exec_loc=exec_loc, model=model)
-
         times_load.append(res[0])
         times_inference.append(res[1])
         times_total.append(res[2])
@@ -102,7 +87,9 @@ def run_image_warm(model_loc, exec_loc, model, model_name):
     
     return {"load": times_load, "execute": times_inference, "totals": times_total}
 
-def run_image(model_loc, exec_loc, model_name, is_cold_start):
+
+def run_image(model_loc: str, exec_loc: str, model_name: str, is_cold_start: bool):
+    """Run image inference in either cold or warm mode."""
     model = torch.hub.load('pytorch/vision:v0.10.0', model_name, pretrained=True)
     
     if is_cold_start:
@@ -122,85 +109,12 @@ def run_image(model_loc, exec_loc, model_name, is_cold_start):
 
 
 if __name__ == "__main__":
-    #torch.backends.cudnn.benchmark = False
-
-    for i in range(10, 101, 10):
-        print(f"Percentage: {i}")
-        try:
-            os.environ['CUDA_MPS_ACTIVE_THREAD_PERCENTAGE'] = f"{i}"
-
-            result_i = run_image_warm(model_loc = model_loc, exec_loc=exec_loc, model=model)
-            result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES,
-                      thread_percentage=i, memory_rate=DEFAULT_MEM_UTIL,
-                      cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
-
-            torch.cuda.empty_cache()
-            gc.collect()
-            time.sleep(0.5)
-        except Exception as e:
-            print(f"Failed")
-            torch.cuda.empty_cache()
-            gc.collect()
-            continue
-        
-    return result
-
-
-if __name__ == "__main__":
-    print("")
-    print("------ Running cpu_benchmark_changing_nr_threads ------")
-    print("")
-
-    cold_start = False
-    exec_loc = "cpu"
-    model_loc = "cpu"
-    nr_outputs = 32
-
-    #llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
-
-
-    prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
-    result = BenchmarkResult()
-
-    for i in [16, 36, 72]:
-        print(f"Nr threads: {i}")
-        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
-        try:
-            os.environ['OMP_NUM_THREADS'] = f"{i}"
-            os.environ['MKL_NUM_THREADS'] = f"{i}"
-
-            llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
-
-            result_i = run_vllm_warm(llm, prompt, nr_outputs)
-            result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES, 
-                        thread_percentage=i, memory_rate=100, 
-                        cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
-
-            del llm
-            torch.cuda.empty_cache()
-            gc.collect()
-            time.sleep(0.5)
-        except Exception as e:
-            print(f"Failed with {e}")
-            if 'llm' in locals():
-                del llm
-            torch.cuda.empty_cache()
-            gc.collect()
-            continue
-    
-    return result
-
-
-if __name__ == "__main__":
-    #torch.backends.cudnn.benchmark = False                                                                                                                                                                                                                                                          
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, help="Hugginface model name")
+    parser.add_argument("--model", type=str, help="Torchvision model name (e.g., resnet50, vgg19)")
     parser.add_argument("--cold_start", action="store_true", help="Enable cold start")
     parser.add_argument("--model_location", type=str, help="cpu/gpu")
     parser.add_argument("--execution_location", type=str, help="cpu/gpu")
-    parser.add_argument("--thread_percentage", type=int, help="for file naming")
-    parser.add_argument("--mode", type=int, help="benchark mode (1: changing batch size, 2: changing input length, 3: changing gpu memory utilization, 4: changing cpu nr threads")
+    parser.add_argument("--mode", type=int, help="benchmark mode for file naming")
     parser.add_argument("--measure_memory", action="store_true", help="Enable memory measurement")
     args = parser.parse_args()
 
@@ -208,7 +122,6 @@ if __name__ == "__main__":
     is_cold_start = args.cold_start
     model_loc = args.model_location
     execution_loc = args.execution_location
-    thread_percentage = args.thread_percentage
     mode = args.mode
     measure_memory = args.measure_memory
 
@@ -220,7 +133,7 @@ if __name__ == "__main__":
         if execution_loc == "gpu":
             watcher = GpuWatcher(gpu_id=0, save_loc=f"{dir_path}/gpu-{mode}-memory.csv")
         else:
-            watcher = CpuWatcher(id=0, save_loc=f"{dir_path}/cpu-{mode}-memory.csv")
+            watcher = CpuWatcher(id=0, save_loc=f"{dir_path}/cpu-{mode}-memory.csv", interval=0.01)
         watcher.start()
 
     # Run inference (handles both warm and cold start internally)
@@ -247,10 +160,6 @@ if __name__ == "__main__":
         "max_total_time": [max(times_total)],
         "min_total_time": [min(times_total)]
     })
-
-
-    #csv_df_string = df.to_csv(index=False)
-    #print(csv_df_string)
 
     file_path = f"{dir_path}/{model_loc}-{execution_loc}-{mode}-{is_cold_start}.csv"
     df.to_csv(file_path, mode='a', header=False, index=False)

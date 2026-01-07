@@ -6,8 +6,6 @@ from datetime import datetime
 import psutil
 import logging
 from pathlib import Path
-from timeit import default_timer as timer
-
 
 class GpuWatcher:
     def __init__(self, gpu_id, save_loc):
@@ -15,14 +13,6 @@ class GpuWatcher:
         self.stop_event = None
         self.watcher = None
         self.save_loc = save_loc
-        #
-        self.poi = []
-
-    def add_poi(self, description):
-        t = timer()
-        poi = (t, description)
-
-        self.poi.append(poi)
 
     def track_gpu(self, stop_event):
         process = subprocess.Popen(
@@ -30,7 +20,7 @@ class GpuWatcher:
                 "nvidia-smi",
                 "--query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used,memory.reserved",
                 "--format=csv,noheader,nounits",
-                "-lms=10",
+                "-lms=100",
                 f"--id={self.gpu_id}",
             ],
             stdout=subprocess.PIPE,
@@ -55,7 +45,7 @@ class GpuWatcher:
                         
                         fields = [f.strip() for f in line.split(',')]
                         if len(fields) == 6:
-                            timestamp = datetime.now().isoformat()
+                            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
                             gpu_util = fields[0]
                             mem_util = fields[1]
                             mem_total = fields[2]
@@ -103,18 +93,10 @@ class CpuWatcher:
         self.watcher = None
         self.interval = interval
         self._lock = threading.Lock()
-        self._first_row = False
+        self._first_row = True
         # Setup logging
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(f"CpuWatcher_{id}")
-
-        self.poi = []
-
-    def add_poi(self, description):
-        t = timer()
-        poi = (t, description)
-
-        self.poi.append(poi)
 
     def track_cpu(self):
         """Efficiently track CPU and memory usage using psutil."""

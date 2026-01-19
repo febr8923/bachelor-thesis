@@ -1,0 +1,4 @@
+benchmark data_loc exec_loc  iteration  total_time_ms  data_transfer_time_ms  computation_time_ms  avg_total_ms  max_total_ms  min_total_ms  avg_transfer_ms  avg_computation_ms
+      bfs      cpu      cpu        5.0         35.291                  0.000               35.291       32.3454        35.291        29.189           0.0000             32.3454
+      bfs      cpu      gpu        5.0       2767.264                  3.040               12.931     2685.9318      2767.264      2629.838           3.0598             13.0214
+      bfs      gpu      cpu        5.0       2635.479                  1.617               33.712     2699.5408      2785.234      2633.615           1.5944             33.5962

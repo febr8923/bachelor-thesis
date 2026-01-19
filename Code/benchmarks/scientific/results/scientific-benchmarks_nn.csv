@@ -1,0 +1,4 @@
+benchmark,data_loc,exec_loc,sm_percentage,num_threads,iteration,total_time_ms,data_transfer_time_ms,computation_time_ms,avg_total_ms,max_total_ms,min_total_ms,avg_transfer_ms,avg_computation_ms
+nn,cpu,cpu,100.0,4.0,5.0,13.670000248000001,0.0,0.0,14.0951998532,16.559999436,12.496000156,0.0,0.0
+nn,cpu,gpu,100.0,4.0,5.0,11.548,0.153,10.318,11.3696,11.548,11.264,0.1504,10.5238
+nn,gpu,cpu,100.0,4.0,5.0,2552.811,0.07,0.212,2559.6348,2599.388,2517.719,0.072,0.20659999999999998

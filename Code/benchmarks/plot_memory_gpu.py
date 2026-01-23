@@ -1,8 +1,15 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import argparse
 
-df = pd.read_csv('results/alexnet/gpu-1-memory.csv')
+path = argparse.ArgumentParser()
+path.add_argument('--csv', type=str, required=False, default='results/alexnet/cpu-1-memory.csv',
+                  help='Path to CSV file with CPU and memory usage data')
+args = path.parse_args()
+file = args.csv
+
+df = pd.read_csv(file)
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 start_time = df['timestamp'].min()

@@ -1,9 +1,17 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import os
+import argparse
 
-# Read the new CSV format
-df = pd.read_csv('results/alexnet/cpu-1-memory.csv')
+
+path = argparse.ArgumentParser()
+path.add_argument('--csv', type=str, required=False, default='results/alexnet/cpu-1-memory.csv',
+                  help='Path to CSV file with CPU and memory usage data')
+args = path.parse_args()
+file = args.csv
+# Read the new CSV format without header
+df = pd.read_csv(file, header=None, names=['timestamp', 'cpu_util_pct', 'mem_total_bytes','mem_used_bytes','mem_available_bytes'])
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 # Calculate relative time and derived metrics
@@ -32,14 +40,14 @@ df_util = df_grouped[['relative_time_s', 'cpu_util_pct', 'mem_util_pct']].melt(
 
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_util, x='relative_time_s', y='value', hue='metric', 
-             palette='Set1', linewidth=2.5, marker='o')
+             palette='Set1', linewidth=2.5)
 plt.title('CPU/Memory utilization aggregated with max in %', fontsize=16, fontweight='bold')
 plt.xlabel('Time (seconds from start)', fontsize=12)
 plt.ylabel('Utilization %', fontsize=12)
 plt.grid(True, alpha=0.3)
 plt.legend(title='Metrics', title_fontsize=11, fontsize=10)
 plt.tight_layout()
-plt.savefig('cpu_memory_relative.png', dpi=150, bbox_inches='tight', facecolor='white')
+plt.savefig('cpu_memory_relative.png', dpi=500, bbox_inches='tight', facecolor='white')
 
 # PLOT 2: Memory values (MB scale) - MAX values
 df_mem = df_grouped[['relative_time_s', 'mem_total_mb', 'mem_used_mb', 'mem_available_mb']].melt(
@@ -50,11 +58,11 @@ df_mem = df_grouped[['relative_time_s', 'mem_total_mb', 'mem_used_mb', 'mem_avai
 
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_mem, x='relative_time_s', y='value', hue='metric', 
-             palette='Set2', linewidth=2.5, marker='o')
+             palette='Set2', linewidth=2.5)
 plt.title('System Memory aggregated with max (MB)', fontsize=16, fontweight='bold')
 plt.xlabel('Time (seconds from start)', fontsize=12)
 plt.ylabel('Memory (MB)', fontsize=12)
 plt.grid(True, alpha=0.3)
 plt.legend(title='Metrics', title_fontsize=11, fontsize=10)
 plt.tight_layout()
-plt.savefig('cpu_memory_absolute.png', dpi=150, bbox_inches='tight', facecolor='white')
+plt.savefig('cpu_memory_absolute.png', dpi=500, bbox_inches='tight', facecolor='white')

@@ -141,16 +141,23 @@ void BFSGraph( int argc, char** argv)
 
 	printf("Read File\n");
 
-	// Start total time measurement
-	double total_start = get_time_ms();
-	
+	// CUDA warmup - triggers driver/runtime initialization BEFORE timing
+	cudaFree(0);
+	cudaDeviceSynchronize();
+
 	// Create CUDA events for GPU timing
 	cudaEvent_t data_transfer_start, data_transfer_end;
 	cudaEvent_t computation_start, computation_end;
+	cudaEvent_t result_copy_start, result_copy_end;
 	cudaEventCreate(&data_transfer_start);
 	cudaEventCreate(&data_transfer_end);
 	cudaEventCreate(&computation_start);
 	cudaEventCreate(&computation_end);
+	cudaEventCreate(&result_copy_start);
+	cudaEventCreate(&result_copy_end);
+
+	// Start total time measurement (after CUDA init)
+	double total_start = get_time_ms();
 	
 	// Start data transfer timing
 	cudaEventRecord(data_transfer_start, 0);
@@ -236,24 +243,30 @@ void BFSGraph( int argc, char** argv)
 
 	printf("Kernel Executed %d times\n",k);
 
-	// copy result from device to host
+	// copy result from device to host (timed)
+	cudaEventRecord(result_copy_start, 0);
 	cudaMemcpy( h_cost, d_cost, sizeof(int)*no_of_nodes, cudaMemcpyDeviceToHost) ;
+	cudaEventRecord(result_copy_end, 0);
+	cudaEventSynchronize(result_copy_end);
 
 	// End total time measurement
 	double total_end = get_time_ms();
-	
+
 	// Calculate elapsed times
 	float data_transfer_time = 0.0f;
 	float computation_time = 0.0f;
+	float result_copy_time = 0.0f;
 	cudaEventElapsedTime(&data_transfer_time, data_transfer_start, data_transfer_end);
 	cudaEventElapsedTime(&computation_time, computation_start, computation_end);
+	cudaEventElapsedTime(&result_copy_time, result_copy_start, result_copy_end);
 	double total_time = total_end - total_start;
-	
+
 	// Print timing results
 	printf("\n=== TIMING RESULTS ===\n");
 	printf("Total time:                %.3f ms\n", total_time);
 	printf("CPU->GPU data transfer:    %.3f ms\n", data_transfer_time);
 	printf("Pure BFS computation:      %.3f ms\n", computation_time);
+	printf("GPU->CPU result copy:      %.3f ms\n", result_copy_time);
 	printf("======================\n\n");
 
 	//Store the result into a file
@@ -268,6 +281,8 @@ void BFSGraph( int argc, char** argv)
 	cudaEventDestroy(data_transfer_end);
 	cudaEventDestroy(computation_start);
 	cudaEventDestroy(computation_end);
+	cudaEventDestroy(result_copy_start);
+	cudaEventDestroy(result_copy_end);
 
 	// cleanup memory
 	free( h_graph_nodes);

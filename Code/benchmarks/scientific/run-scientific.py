@@ -59,7 +59,7 @@ BENCHMARKS = {
     "nn": {
         "cpu_dir": "nn",
         "gpu_dir": "nn_cuda",
-        "cpu_executable": "nn",
+        "cpu_executable": "nn_walltime",
         "gpu_executable": "nn",
         "gpu_cpu_executable": "nn_gpu_cpu",  # GPU-CPU hybrid mode
         "cpu_args": ["filelist_4", "5", "30", "90"],  # filelist, k, lat, lng
@@ -79,13 +79,16 @@ BENCHMARKS = {
         "gpu_dir": "leukocyte_cuda",
         "cpu_executable": "OpenMP/leukocyte",
         "gpu_executable": "CUDA/leukocyte",
-        # Note: leukocyte doesn't have gpu_cpu mode yet
+        "gpu_cpu_executable": "CUDA/leukocyte_gpu_cpu",  # GPU-CPU hybrid mode
         "cpu_args": ["5", "4", "../data/leukocyte/testfile.avi"],  # num_frames, num_threads, input_file
         "gpu_args": ["../data/leukocyte/testfile.avi", "5"],  # input_file, num_frames
+        "gpu_cpu_args": ["../data/leukocyte/testfile.avi", "5", "4"],  # input_file, num_frames, num_threads
         "timing_patterns": {
             "total": r"Total time:\s+([\d.]+)\s*ms",
             "data_transfer": r"CPU->GPU data transfer:\s+([\d.]+)\s*ms",
+            "gpu_cpu_transfer": r"GPU->CPU data transfer:\s+([\d.]+)\s*ms",
             "computation": r"Pure computation:\s+([\d.]+)\s*ms",
+            "cpu_computation": r"CPU computation \(OpenMP\):\s+([\d.]+)\s*ms",
             "cpu_total": r"Total application run time:\s+([\d.]+)\s*seconds",  # CPU version uses seconds
         }
     }
@@ -203,6 +206,9 @@ def run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
         # BFS gpu-cpu takes num_threads as second arg
         if benchmark_name == "bfs" and len(args) >= 2:
             args[1] = str(num_threads)
+        # Leukocyte gpu-cpu takes num_threads as third arg
+        elif benchmark_name == "leukocyte" and len(args) >= 3:
+            args[2] = str(num_threads)
     elif exec_loc == "gpu":
         # CPU-GPU mode (standard CUDA): data on CPU, execution on GPU
         work_dir = os.path.join(base_dir, config["gpu_dir"])
@@ -212,10 +218,12 @@ def run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
         # CPU-CPU mode: data on CPU, execution on CPU
         work_dir = os.path.join(base_dir, config["cpu_dir"])
         executable = os.path.join(work_dir, config["cpu_executable"])
-        # Update thread count in args for BFS
+        # Update thread count in args for BFS and leukocyte
         args = list(config["cpu_args"])
         if benchmark_name == "bfs" and len(args) >= 1:
             args[0] = str(num_threads)
+        elif benchmark_name == "leukocyte" and len(args) >= 2:
+            args[1] = str(num_threads)
 
     # Build command
     cmd = [executable] + args

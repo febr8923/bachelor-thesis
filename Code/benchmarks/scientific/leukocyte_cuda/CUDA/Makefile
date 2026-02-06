@@ -28,14 +28,22 @@ ifeq ($(emu),1)
 endif
 
 
+all: leukocyte leukocyte_gpu_cpu
+
 leukocyte: detect_main.o avilib.o find_ellipse.o find_ellipse_kernel.o track_ellipse.o track_ellipse_kernel.o misc_math.o $(MATRIX_DIR)/meschach.a
 	$(CC) $(CC_FLAGS) -lm avilib.o find_ellipse.o find_ellipse_kernel.o track_ellipse.o track_ellipse_kernel.o misc_math.o detect_main.o -o leukocyte $(MATRIX_DIR)/meschach.a -L$(CUDA_LIB_DIR) -lm -lcuda -lcudart
+
+leukocyte_gpu_cpu: detect_main_gpu_cpu.o avilib.o find_ellipse.o find_ellipse_kernel.o track_ellipse.o track_ellipse_kernel.o misc_math.o $(MATRIX_DIR)/meschach.a
+	$(CC) $(CC_FLAGS) -fopenmp -lm avilib.o find_ellipse.o find_ellipse_kernel.o track_ellipse.o track_ellipse_kernel.o misc_math.o detect_main_gpu_cpu.o -o leukocyte_gpu_cpu $(MATRIX_DIR)/meschach.a -L$(CUDA_LIB_DIR) -lm -lcuda -lcudart
 
 %.o: %.[ch]
 	$(CC)  $(OUTPUT) $(CC_FLAGS) $< -c
 
-detect_main.o: detect_main.c find_ellipse.h track_ellipse.h avilib.h 
+detect_main.o: detect_main.c find_ellipse.h track_ellipse.h avilib.h
 	$(CC) $(CC_FLAGS) detect_main.c -c
+
+detect_main_gpu_cpu.o: detect_main_gpu_cpu.cu find_ellipse.h avilib.h
+	$(NVCC) $(NVCC_FLAGS) -Xcompiler -fopenmp -I$(MATRIX_DIR) -c detect_main_gpu_cpu.cu
 
 find_ellipse_kernel.o: find_ellipse_kernel.cu find_ellipse_kernel.h
 	$(NVCC) $(NVCC_FLAGS) -c find_ellipse_kernel.cu
@@ -51,4 +59,4 @@ $(MATRIX_DIR)/meschach.a:
 	cd $(MATRIX_DIR); ./configure --with-all; make all; make clean
 
 clean:
-	rm -f *.o *~ leukocyte *.linkinfo
+	rm -f *.o *~ leukocyte leukocyte_gpu_cpu *.linkinfo

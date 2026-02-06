@@ -91,7 +91,12 @@ int main(int argc, char* argv[])
       return 0;
     }
 
+    // Start total time measurement (includes disk I/O for fair comparison with CPU-only)
+    double total_start = get_time_ms();
+
     int numRecords = loadData(filename,records,locations);
+    double load_end = get_time_ms();
+    fprintf(stderr, "DEBUG: Loaded %d records in %.3f ms from %s\n", numRecords, load_end - total_start, filename);
     if (resultsCount > numRecords) resultsCount = numRecords;
 
     // Pointers to host memory
@@ -101,8 +106,6 @@ int main(int argc, char* argv[])
 	// Pointers to device memory
 	LatLong *d_locations;
 
-	// Start total time measurement
-	double total_start = get_time_ms();
 
 	// Create CUDA events for GPU timing
 	cudaEvent_t transfer_to_gpu_start, transfer_to_gpu_end;
@@ -138,10 +141,10 @@ int main(int argc, char* argv[])
 	// === PHASE 3: CPU Computation using OpenMP ===
 	double compute_start = get_time_ms();
 	euclid_cpu(h_locations, h_distances, numRecords, lat, lng);
-	double compute_end = get_time_ms();
 
 	// find the resultsCount least distances
     findLowest(records, h_distances, numRecords, resultsCount);
+	double compute_end = get_time_ms();
 
 	// End total time measurement
 	double total_end = get_time_ms();

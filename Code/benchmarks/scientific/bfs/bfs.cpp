@@ -128,7 +128,7 @@ void BFSGraph( int argc, char** argv)
             stop=false;
 
 #ifdef OPEN
-            //omp_set_num_threads(num_omp_threads);
+            omp_set_num_threads(num_omp_threads);
     #ifdef OMP_OFFLOAD
     #pragma omp target
     #endif

@@ -180,8 +180,6 @@ void BFSGraph( int argc, char** argv)
 		h_cost[i]=-1;
 	h_cost[source]=0;
 
-	// Start total time measurement
-	double total_start = get_time_ms();
 
 	// Create CUDA events for GPU timing
 	cudaEvent_t transfer_to_gpu_start, transfer_to_gpu_end;
@@ -199,6 +197,9 @@ void BFSGraph( int argc, char** argv)
 	bool* d_updating_graph_mask;
 	bool* d_graph_visited;
 	int* d_cost;
+
+
+
 
 	cudaEventRecord(transfer_to_gpu_start, 0);
 
@@ -222,6 +223,9 @@ void BFSGraph( int argc, char** argv)
 	printf("Data copied to GPU (simulating data origin on GPU)\n");
 
 	// === PHASE 2: GPU->CPU Transfer (THIS IS WHAT WE MEASURE) ===
+
+	// Start total time measurement
+	double total_start = get_time_ms();
 	// Allocate fresh host memory for receiving data from GPU
 	Node* h_graph_nodes_from_gpu = (Node*) malloc(sizeof(Node)*no_of_nodes);
 	int* h_graph_edges_from_gpu = (int*) malloc(sizeof(int)*edge_list_size);

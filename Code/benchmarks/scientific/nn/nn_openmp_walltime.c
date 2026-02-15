@@ -26,9 +26,8 @@ struct neighbor {
 * REC_WINDOW has been arbitrarily assigned; A larger value would allow more work for the threads
 */
 int main(int argc, char* argv[]) {
-	double time0 = omp_get_wtime();
     FILE   *flist,*fp;
-	int    i=0,j=0, k=0, rec_count=0, done=0, total_records=0;
+	int    i=0,j=0, k=0, rec_count=0, done=0;
 	char   sandbox[REC_LENGTH * REC_WINDOW], *rec_iter,*rec_iter2, dbname[64];
 	struct neighbor *neighbors = NULL;
 	float target_lat, target_long, tmp_lat=0, tmp_long=0;
@@ -74,10 +73,10 @@ int main(int argc, char* argv[]) {
 	float *z;
 	z  = (float *) malloc(REC_WINDOW * sizeof(float));
 
+	double compute_start = omp_get_wtime();
 	while(!done) {
 		//Read in REC_WINDOW number of records
 		rec_count = fread(sandbox, REC_LENGTH, REC_WINDOW, fp);
-		total_records += rec_count;
 		if( rec_count != REC_WINDOW ) {
 			if(!ferror(flist)) {// an eof occured
 				fclose(fp);
@@ -132,17 +131,10 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}//End while loop
-
-	fprintf(stderr, "The %d nearest neighbors are:\n", k);
-	for( j = 0 ; j < k ; j++ ) {
-		if( !(neighbors[j].dist == OPEN) )
-			fprintf(stderr, "%s --> %f\n", neighbors[j].entry, neighbors[j].dist);
-	}
+	double compute_end = omp_get_wtime();
 
 	fclose(flist);
 
-	double time1 = omp_get_wtime();
-	fprintf(stderr, "DEBUG: Processed %d total records from %s\n", total_records, argv[1]);
-	printf("total time : %15.12f s", time1 - time0);
+	printf("CPU computation (OpenMP):  %.3f ms\n", (compute_end - compute_start) * 1000.0);
     return 0;
 }

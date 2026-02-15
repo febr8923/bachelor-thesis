@@ -168,7 +168,7 @@ def plot_all_benchmarks_overview(df, output_dir):
 def main():
     # Find the results CSV
     script_dir = Path(__file__).parent
-    csv_path = script_dir / 'scientific-benchmarks.csv'
+    csv_path = script_dir / 'scientific-benchmarks-False.csv'
 
     if not csv_path.exists():
         print(f"Error: Results file not found at {csv_path}")

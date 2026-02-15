@@ -198,17 +198,9 @@ int main(int argc, char* argv[])
 	double total_time = total_end - total_start;
 
 	// Print timing results
-	printf("\n=== TIMING RESULTS ===\n");
 	printf("Total time:                %.3f ms\n", total_time);
 	printf("CPU->GPU data transfer:    %.3f ms\n", data_transfer_time);
 	printf("Pure NN computation:       %.3f ms\n", computation_time);
-	printf("======================\n\n");
-
-    // print out results
-    if (!quiet)
-    for(i=0;i<resultsCount;i++) {
-      printf("%s --> Distance=%f\n",records[i].recString,records[i].distance);
-    }
 
 	// Destroy CUDA events
 	cudaEventDestroy(data_transfer_start);

@@ -98,7 +98,6 @@ void BFS_CPU(Node* h_graph_nodes, int* h_graph_edges, bool* h_graph_mask,
         k++;
     } while(stop);
 
-    printf("BFS executed %d iterations\n", k);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -119,7 +118,6 @@ void BFSGraph( int argc, char** argv)
         num_threads = atoi(argv[2]);
     }
 
-	printf("Reading File\n");
 	//Read in Graph from a file
 	fp = fopen(input_f,"r");
 	if(!fp)
@@ -172,8 +170,6 @@ void BFSGraph( int argc, char** argv)
 	if(fp)
 		fclose(fp);
 
-	printf("Read File\n");
-
 	// allocate mem for the result on host side
 	int* h_cost = (int*) malloc( sizeof(int)*no_of_nodes);
 	for(int i=0;i<no_of_nodes;i++)
@@ -220,12 +216,8 @@ void BFSGraph( int argc, char** argv)
 	cudaEventRecord(transfer_to_gpu_end, 0);
 	cudaEventSynchronize(transfer_to_gpu_end);
 
-	printf("Data copied to GPU (simulating data origin on GPU)\n");
-
 	// === PHASE 2: GPU->CPU Transfer (THIS IS WHAT WE MEASURE) ===
 
-	// Start total time measurement
-	double total_start = get_time_ms();
 	// Allocate fresh host memory for receiving data from GPU
 	Node* h_graph_nodes_from_gpu = (Node*) malloc(sizeof(Node)*no_of_nodes);
 	int* h_graph_edges_from_gpu = (int*) malloc(sizeof(int)*edge_list_size);
@@ -234,6 +226,8 @@ void BFSGraph( int argc, char** argv)
 	bool* h_graph_visited_from_gpu = (bool*) malloc(sizeof(bool)*no_of_nodes);
 	int* h_cost_from_gpu = (int*) malloc(sizeof(int)*no_of_nodes);
 
+	// Start total time measurement (covers only transfer + computation)
+	double total_start = get_time_ms();
 	cudaEventRecord(transfer_to_cpu_start, 0);
 
 	cudaMemcpy( h_graph_nodes_from_gpu, d_graph_nodes, sizeof(Node)*no_of_nodes, cudaMemcpyDeviceToHost);
@@ -246,11 +240,7 @@ void BFSGraph( int argc, char** argv)
 	cudaEventRecord(transfer_to_cpu_end, 0);
 	cudaEventSynchronize(transfer_to_cpu_end);
 
-	printf("Data transferred from GPU to CPU\n");
-
 	// === PHASE 3: CPU Computation using OpenMP ===
-	printf("Start traversing the tree on CPU with %d threads\n", num_threads);
-
 	double compute_start = get_time_ms();
 	BFS_CPU(h_graph_nodes_from_gpu, h_graph_edges_from_gpu, h_graph_mask_from_gpu,
 	        h_updating_graph_mask_from_gpu, h_graph_visited_from_gpu, h_cost_from_gpu,
@@ -269,19 +259,15 @@ void BFSGraph( int argc, char** argv)
 	double total_time = total_end - total_start;
 
 	// Print timing results
-	printf("\n=== TIMING RESULTS (GPU-CPU Mode) ===\n");
 	printf("Total time:                %.3f ms\n", total_time);
 	printf("GPU->CPU data transfer:    %.3f ms\n", transfer_to_cpu_time);
 	printf("CPU computation (OpenMP):  %.3f ms\n", computation_time);
-	printf("(Setup: CPU->GPU transfer: %.3f ms - not counted)\n", transfer_to_gpu_time);
-	printf("=====================================\n\n");
 
 	//Store the result into a file
 	FILE *fpo = fopen("result.txt","w");
 	for(int i=0;i<no_of_nodes;i++)
 		fprintf(fpo,"%d) cost:%d\n",i,h_cost_from_gpu[i]);
 	fclose(fpo);
-	printf("Result stored in result.txt\n");
 
 	// Destroy CUDA events
 	cudaEventDestroy(transfer_to_gpu_start);

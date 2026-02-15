@@ -51,7 +51,6 @@ void BFSGraph( int argc, char** argv)
 	num_omp_threads = atoi(argv[1]);
 	input_f = argv[2];
 	
-	printf("Reading File\n");
 	//Read in Graph from a file
 	fp = fopen(input_f,"r");
 	if(!fp)
@@ -110,8 +109,6 @@ void BFSGraph( int argc, char** argv)
 	for(int i=0;i<no_of_nodes;i++)
 		h_cost[i]=-1;
 	h_cost[source]=0;
-	
-	printf("Start traversing the tree\n");
 	
 	int k=0;
 #ifdef OPEN
@@ -180,7 +177,6 @@ void BFSGraph( int argc, char** argv)
 	for(int i=0;i<no_of_nodes;i++)
 		fprintf(fpo,"%d) cost:%d\n",i,h_cost[i]);
 	fclose(fpo);
-	printf("Result stored in result.txt\n");
 
 
 	// cleanup memory

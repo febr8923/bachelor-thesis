@@ -2,6 +2,7 @@
 # TODO: Add GPL-3.0 License
 
 import cupy as np
+import time
 import os
 import csv
 from pathlib import Path
@@ -17,7 +18,8 @@ Code calculates pairwise forces according to Newton's Law of Gravity
 RESULTS_DIR = Path(__file__).parent.parent.parent / "results"
 CSV_FILE = RESULTS_DIR / "npbench_results.csv"
 CSV_COLUMNS = ["benchmark", "data_loc", "exec_loc", "num_threads", "sm_percentage",
-               "iteration", "transfer_time_ms", "computation_time_ms", "total_time_ms"]
+               "cold_start", "iteration", "transfer_time_ms", "computation_time_ms",
+               "total_time_ms", "wall_time_ms"]
 
 def ensure_csv_exists():
     """Create results directory and CSV file with headers if they don't exist."""
@@ -28,13 +30,15 @@ def ensure_csv_exists():
             writer.writerow(CSV_COLUMNS)
 
 def append_result(benchmark, data_loc, exec_loc, num_threads, sm_percentage,
-                  iteration, transfer_time_ms, computation_time_ms, total_time_ms):
+                  cold_start, iteration, transfer_time_ms, computation_time_ms,
+                  total_time_ms, wall_time_ms):
     """Append a single result row to the CSV file."""
     ensure_csv_exists()
     with open(CSV_FILE, 'a', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([benchmark, data_loc, exec_loc, num_threads, sm_percentage,
-                        iteration, transfer_time_ms, computation_time_ms, total_time_ms])
+                        cold_start, iteration, transfer_time_ms, computation_time_ms,
+                        total_time_ms, wall_time_ms])
 
 
 def initialize(N, tEnd, dt):
@@ -50,7 +54,7 @@ def initialize(N, tEnd, dt):
 
 def getAcc(pos, mass, G, softening):
     """
-    Calculate the acceleration on each particle due to Newton's Law 
+    Calculate the acceleration on each particle due to Newton's Law
     pos  is an N x 3 matrix of positions
     mass is an N x 1 vector of masses
     G is Newton's Gravitational constant
@@ -157,15 +161,21 @@ def nbody(mass, pos, vel, N, Nt, dt, G, softening):
 
 
 
-def run_single(N=1000, num_iterations=5, data_loc="cpu"):
+def run_single(N=10000, num_iterations=50, num_warmup=2, data_loc="cpu", cold_start=False):
     """
     Run nbody benchmark on GPU with fixed N.
 
     Args:
         N: Number of particles
         num_iterations: Number of benchmark iterations
+        num_warmup: Number of warmup iterations
         data_loc: "cpu" for CPU->GPU transfer, "gpu" for GPU-only (no transfer)
+        cold_start: If True, skip warmup and run single iteration
     """
+    if cold_start:
+        num_warmup = 0
+        num_iterations = 1
+
     tEnd = 1.0
     dt = 0.01
     G = 1.0
@@ -174,7 +184,7 @@ def run_single(N=1000, num_iterations=5, data_loc="cpu"):
     sm_percentage = os.environ.get("CUDA_MPS_ACTIVE_THREAD_PERCENTAGE", "100")
 
     # Warmup runs
-    for _ in range(2):
+    for _ in range(num_warmup):
         mass_cpu, pos_cpu, vel_cpu, Nt = initialize(N, tEnd, dt)
         mass = np.asarray(mass_cpu)
         pos = np.asarray(pos_cpu)
@@ -183,6 +193,8 @@ def run_single(N=1000, num_iterations=5, data_loc="cpu"):
 
     for iteration in range(num_iterations):
         mass_cpu, pos_cpu, vel_cpu, Nt = initialize(N, tEnd, dt)
+
+        wall_start = time.perf_counter()
 
         if data_loc == "cpu":
             # Data starts on CPU, measure transfer time to GPU
@@ -214,6 +226,7 @@ def run_single(N=1000, num_iterations=5, data_loc="cpu"):
 
         compute_time = np.cuda.get_elapsed_time(start_time_compute, end_time_compute)
         total_time = transfer_time + compute_time
+        wall_time = (time.perf_counter() - wall_start) * 1000
 
         append_result(
             benchmark="nbody",
@@ -221,25 +234,32 @@ def run_single(N=1000, num_iterations=5, data_loc="cpu"):
             exec_loc="gpu",
             num_threads="",
             sm_percentage=sm_percentage,
+            cold_start=cold_start,
             iteration=iteration,
             transfer_time_ms=round(transfer_time, 3),
             computation_time_ms=round(compute_time, 3),
-            total_time_ms=round(total_time, 3)
+            total_time_ms=round(total_time, 3),
+            wall_time_ms=round(wall_time, 3)
         )
 
-        print(f"[nbody gpu] sm={sm_percentage}% iter={iteration} "
-              f"transfer={transfer_time:.3f}ms compute={compute_time:.3f}ms total={total_time:.3f}ms")
+        print(f"transfer={transfer_time:.3f} compute={compute_time:.3f} total={total_time:.3f}")
 
 
-def sweep_n(n_range=range(100, 1100, 100), num_iterations=5, data_loc="cpu"):
+def sweep_n(n_range=range(100, 1100, 100), num_iterations=5, num_warmup=2, data_loc="cpu", cold_start=False):
     """
     Run nbody benchmark on GPU, sweeping over different N values.
 
     Args:
         n_range: Range of N values to test
         num_iterations: Number of benchmark iterations per N
+        num_warmup: Number of warmup iterations
         data_loc: "cpu" for CPU->GPU transfer, "gpu" for GPU-only (no transfer)
+        cold_start: If True, skip warmup and run single iteration
     """
+    if cold_start:
+        num_warmup = 0
+        num_iterations = 1
+
     tEnd = 1.0
     dt = 0.01
     G = 1.0
@@ -248,7 +268,7 @@ def sweep_n(n_range=range(100, 1100, 100), num_iterations=5, data_loc="cpu"):
     sm_percentage = os.environ.get("CUDA_MPS_ACTIVE_THREAD_PERCENTAGE", "100")
 
     # Warmup runs
-    for _ in range(2):
+    for _ in range(num_warmup):
         mass_cpu, pos_cpu, vel_cpu, Nt = initialize(1000, tEnd, dt)
         mass = np.asarray(mass_cpu)
         pos = np.asarray(pos_cpu)
@@ -258,6 +278,8 @@ def sweep_n(n_range=range(100, 1100, 100), num_iterations=5, data_loc="cpu"):
     for N in n_range:
         for iteration in range(num_iterations):
             mass_cpu, pos_cpu, vel_cpu, Nt = initialize(N, tEnd, dt)
+
+            wall_start = time.perf_counter()
 
             if data_loc == "cpu":
                 start_time_transfer = np.cuda.Event()
@@ -288,6 +310,7 @@ def sweep_n(n_range=range(100, 1100, 100), num_iterations=5, data_loc="cpu"):
 
             compute_time = np.cuda.get_elapsed_time(start_time_compute, end_time_compute)
             total_time = transfer_time + compute_time
+            wall_time = (time.perf_counter() - wall_start) * 1000
 
             append_result(
                 benchmark=f"nbody_N{N}",
@@ -295,14 +318,15 @@ def sweep_n(n_range=range(100, 1100, 100), num_iterations=5, data_loc="cpu"):
                 exec_loc="gpu",
                 num_threads="",
                 sm_percentage=sm_percentage,
+                cold_start=cold_start,
                 iteration=iteration,
                 transfer_time_ms=round(transfer_time, 3),
                 computation_time_ms=round(compute_time, 3),
-                total_time_ms=round(total_time, 3)
+                total_time_ms=round(total_time, 3),
+                wall_time_ms=round(wall_time, 3)
             )
 
-            print(f"[nbody gpu N={N}] sm={sm_percentage}% iter={iteration} "
-                  f"transfer={transfer_time:.3f}ms compute={compute_time:.3f}ms total={total_time:.3f}ms")
+            print(f"transfer={transfer_time:.3f} compute={compute_time:.3f} total={total_time:.3f}")
 
 
 if __name__ == "__main__":
@@ -312,11 +336,16 @@ if __name__ == "__main__":
                         help="Run mode: single (fixed N) or sweep (vary N)")
     parser.add_argument("--N", type=int, default=1000, help="Number of particles (for single mode)")
     parser.add_argument("--iterations", type=int, default=5, help="Number of iterations")
+    parser.add_argument("--warmup", type=int, default=2, help="Number of warmup iterations")
     parser.add_argument("--data-loc", choices=["cpu", "gpu"], default="cpu",
                         help="Data location: cpu (CPU->GPU transfer) or gpu (no transfer)")
+    parser.add_argument("--cold_start", action="store_true",
+                        help="Cold start mode: no warmup, single iteration")
     args = parser.parse_args()
 
     if args.mode == "single":
-        run_single(N=args.N, num_iterations=args.iterations, data_loc=args.data_loc)
+        run_single(N=args.N, num_iterations=args.iterations, num_warmup=args.warmup,
+                   data_loc=args.data_loc, cold_start=args.cold_start)
     else:
-        sweep_n(num_iterations=args.iterations, data_loc=args.data_loc)
+        sweep_n(num_iterations=args.iterations, num_warmup=args.warmup,
+                data_loc=args.data_loc, cold_start=args.cold_start)

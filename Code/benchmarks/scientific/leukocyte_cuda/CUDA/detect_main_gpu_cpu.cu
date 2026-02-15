@@ -52,6 +52,7 @@ long long get_time_us() {
 }
 
 // CPU implementation of GICOV computation using OpenMP
+// (matches ellipsematching() in OpenMP/find_ellipse.c exactly)
 MAT* ellipsematching_cpu(MAT* grad_x, MAT* grad_y) {
     int i, n, k;
 
@@ -105,11 +106,12 @@ MAT* ellipsematching_cpu(MAT* grad_x, MAT* grad_y) {
                 }
                 var = var / (double)(NPOINTS - 1);
 
-                if (var > 0 && mean * mean / var > max_GICOV) {
+                // Keep track of the maximal GICOV value seen so far
+                if (mean * mean / var > max_GICOV) {
+                    m_set_val(gicov, j, i, mean / sqrt(var));
                     max_GICOV = mean * mean / var;
                 }
             }
-            m_set_val(gicov, j, i, max_GICOV);
         }
     }
 
@@ -117,30 +119,49 @@ MAT* ellipsematching_cpu(MAT* grad_x, MAT* grad_y) {
 }
 
 // CPU implementation of dilation using OpenMP
-MAT* dilate_cpu(MAT* gicov) {
-    int height = gicov->m, width = gicov->n;
-    int radius = 12;
-    MAT* result = m_get(height, width);
+// (matches dilate_f() with structuring_element() in OpenMP/find_ellipse.c exactly)
+MAT* dilate_cpu(MAT* img_in) {
+    int strel_radius = 12;
+    int strel_m = strel_radius * 2 + 1;
+    int strel_n = strel_radius * 2 + 1;
 
-    #pragma omp parallel for num_threads(omp_num_threads)
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            double max_val = m_get_val(gicov, i, j);
-            for (int di = -radius; di <= radius; di++) {
-                for (int dj = -radius; dj <= radius; dj++) {
-                    int ni = i + di;
-                    int nj = j + dj;
-                    if (ni >= 0 && ni < height && nj >= 0 && nj < width) {
-                        double val = m_get_val(gicov, ni, nj);
-                        if (val > max_val) max_val = val;
-                    }
-                }
-            }
-            m_set_val(result, i, j, max_val);
+    // Build circular structuring element (matching structuring_element())
+    MAT* strel = m_get(strel_m, strel_n);
+    for (int si = 0; si < strel_m; si++) {
+        for (int sj = 0; sj < strel_n; sj++) {
+            if (sqrt((float)((si - strel_radius) * (si - strel_radius) +
+                             (sj - strel_radius) * (sj - strel_radius))) <= strel_radius)
+                m_set_val(strel, si, sj, 1.0);
+            else
+                m_set_val(strel, si, sj, 0.0);
         }
     }
 
-    return result;
+    MAT* dilated = m_get(img_in->m, img_in->n);
+    int el_center_i = strel->m / 2, el_center_j = strel->n / 2;
+
+    #pragma omp parallel for num_threads(omp_num_threads)
+    for (int i = 0; i < img_in->m; i++) {
+        int j, el_i, el_j, x, y;
+        for (j = 0; j < img_in->n; j++) {
+            double max = 0.0, temp;
+            for (el_i = 0; el_i < strel->m; el_i++) {
+                for (el_j = 0; el_j < strel->n; el_j++) {
+                    y = i - el_center_i + el_i;
+                    x = j - el_center_j + el_j;
+                    if (y >= 0 && x >= 0 && y < img_in->m && x < img_in->n &&
+                        m_get_val(strel, el_i, el_j) != 0) {
+                        temp = m_get_val(img_in, y, x);
+                        if (temp > max) max = temp;
+                    }
+                }
+            }
+            m_set_val(dilated, i, j, max);
+        }
+    }
+
+    m_free(strel);
+    return dilated;
 }
 
 int main(int argc, char** argv) {
@@ -155,9 +176,6 @@ int main(int argc, char** argv) {
         omp_num_threads = atoi(argv[3]);
     }
 
-    printf("Leukocyte GPU-CPU Mode\n");
-    printf("Num threads: %d\n", omp_num_threads);
-
     // Open video file
     avi_t* cell_file = AVI_open_input_file(video_file_name, 1);
     if (cell_file == NULL) {
@@ -170,8 +188,6 @@ int main(int argc, char** argv) {
     int vid_height = AVI_video_height(cell_file);
     int frame_size = vid_width * vid_height;
 
-    printf("Video: %dx%d, %d frames\n", vid_width, vid_height, num_frames);
-
     // Create CUDA events for timing
     cudaEvent_t transfer_to_gpu_start, transfer_to_gpu_end;
     cudaEvent_t transfer_to_cpu_start, transfer_to_cpu_end;
@@ -181,7 +197,6 @@ int main(int argc, char** argv) {
     cudaEventCreate(&transfer_to_cpu_end);
 
     // Extract and process first frame
-    printf("Detecting cells in frame 0\n");
     MAT* image_chopped = get_frame(cell_file, 0, 1, 0);
 
     // Compute gradients on CPU first
@@ -215,8 +230,6 @@ int main(int argc, char** argv) {
     cudaEventRecord(transfer_to_gpu_end, 0);
     cudaEventSynchronize(transfer_to_gpu_end);
 
-    printf("Data copied to GPU (simulating data origin on GPU)\n");
-
     // Start total time measurement
     double total_start = get_time_ms();
 
@@ -240,8 +253,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("Data transferred from GPU to CPU\n");
-
     // === PHASE 3: CPU Computation using OpenMP ===
     double compute_start = get_time_ms();
 
@@ -260,13 +271,13 @@ int main(int argc, char** argv) {
     // Dilation
     MAT* img_dilated = dilate_cpu(max_gicov);
 
-    // Find cell centers (matching cpu-cpu version)
-    int pair_counter = 0;
+    // Find cell centers (matching cpu-cpu version exactly)
+    int i, j, n, pair_counter = 0, x_result_len = 0, Iter = 20, ns = 4, k_count = 0;
     int* crow = (int*)malloc(max_gicov->m * max_gicov->n * sizeof(int));
     int* ccol = (int*)malloc(max_gicov->m * max_gicov->n * sizeof(int));
 
-    for (int i = 0; i < max_gicov->m; i++) {
-        for (int j = 0; j < max_gicov->n; j++) {
+    for (i = 0; i < max_gicov->m; i++) {
+        for (j = 0; j < max_gicov->n; j++) {
             if (!(m_get_val(max_gicov, i, j) == 0.0) &&
                 (m_get_val(img_dilated, i, j) == m_get_val(max_gicov, i, j))) {
                 crow[pair_counter] = i;
@@ -278,17 +289,16 @@ int main(int argc, char** argv) {
 
     // Get GICOV values for detected spots
     double* GICOV_spots = (double*)malloc(sizeof(double) * pair_counter);
-    for (int i = 0; i < pair_counter; i++) {
+    for (i = 0; i < pair_counter; i++) {
         GICOV_spots[i] = m_get_val(gicov, crow[i], ccol[i]);
     }
 
-    // Filter results and compute cell centers (matching cpu-cpu version)
     double* G = (double*)calloc(pair_counter, sizeof(double));
     double* x_result = (double*)calloc(pair_counter, sizeof(double));
     double* y_result = (double*)calloc(pair_counter, sizeof(double));
 
-    int x_result_len = 0;
-    for (int i = 0; i < pair_counter; i++) {
+    x_result_len = 0;
+    for (i = 0; i < pair_counter; i++) {
         if ((crow[i] > 29) && (crow[i] < BOTTOM - TOP + 39)) {
             x_result[x_result_len] = ccol[i];
             y_result[x_result_len] = crow[i] - 40;
@@ -297,40 +307,132 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Create cell boundaries and find valid cell centers
-    double threshold = 1.8;
+    // Make an array t which holds each "time step" for the possible cells
+    double* t = (double*)malloc(sizeof(double) * 36);
+    for (i = 0; i < 36; i++) {
+        t[i] = (double)i * 2.0 * PI / 36.0;
+    }
+
+    // Store cell boundaries (as simple circles) for all cells
+    MAT* cellx = m_get(x_result_len, 36);
+    MAT* celly = m_get(x_result_len, 36);
     double radius = 10.0;
-    double b = 5.0;
-
-    double* QAX_CENTERS = (double*)malloc(sizeof(double) * pair_counter);
-    double* QAY_CENTERS = (double*)malloc(sizeof(double) * pair_counter);
-    memset(QAX_CENTERS, 0, sizeof(double) * pair_counter);
-    memset(QAY_CENTERS, 0, sizeof(double) * pair_counter);
-
-    int k_count = 0;
-    for (int n = 0; n < x_result_len; n++) {
-        if ((G[n] < -1 * threshold) || G[n] > threshold) {
-            // Check if cell is not too close to edge
-            double min_x = x_result[n] - radius;
-            double max_x = x_result[n] + radius;
-            double min_y = y_result[n] - radius;
-            double max_y = y_result[n] + radius;
-
-            if ((min_x > b) && (min_y > b) &&
-                (max_x < cell_file->width - b) && (max_y < cell_file->height - b)) {
-                QAX_CENTERS[k_count] = x_result[n];
-                QAY_CENTERS[k_count] = y_result[n] + TOP;
-                k_count++;
-            }
+    for (i = 0; i < x_result_len; i++) {
+        for (j = 0; j < 36; j++) {
+            m_set_val(cellx, i, j, x_result[i] + radius * cos(t[j]));
+            m_set_val(celly, i, j, y_result[i] + radius * sin(t[j]));
         }
     }
 
-    printf("Cells detected: %d\n", k_count);
+    MAT* A = TMatrix(9, 4);
+
+    double threshold = 1.8;
+    double delta = 3.0;
+    double dt = 0.01;
+    double b = 5.0;
+
+    double* V = (double*)malloc(sizeof(double) * pair_counter);
+    double* QAX_CENTERS = (double*)malloc(sizeof(double) * pair_counter);
+    double* QAY_CENTERS = (double*)malloc(sizeof(double) * pair_counter);
+    memset(V, 0, sizeof(double) * pair_counter);
+    memset(QAX_CENTERS, 0, sizeof(double) * pair_counter);
+    memset(QAY_CENTERS, 0, sizeof(double) * pair_counter);
+
+    // For all possible results, find the ones that are feasibly leukocytes and store their centers
+    k_count = 0;
+    for (n = 0; n < x_result_len; n++) {
+        if ((G[n] < -1 * threshold) || G[n] > threshold) {
+            MAT *x, *y;
+            VEC *x_row, *y_row;
+            x = m_get(1, 36);
+            y = m_get(1, 36);
+
+            x_row = v_get(36);
+            y_row = v_get(36);
+
+            // Get current values of possible cells from cellx/celly matrices
+            x_row = get_row(cellx, n, x_row);
+            y_row = get_row(celly, n, y_row);
+            uniformseg(x_row, y_row, x, y);
+
+            // Make sure that the possible leukocytes are not too close to the edge of the frame
+            if ((m_min(x) > b) && (m_min(y) > b) && (m_max(x) < cell_file->width - b) && (m_max(y) < cell_file->height - b)) {
+                MAT *Cx, *Cy, *Cy_temp, *Ix1, *Iy1;
+                VEC *Xs, *Ys, *W, *Nx, *Ny, *X, *Y;
+                Cx = m_get(1, 36);
+                Cy = m_get(1, 36);
+                Cx = mmtr_mlt(A, x, Cx);
+                Cy = mmtr_mlt(A, y, Cy);
+
+                Cy_temp = m_get(Cy->m, Cy->n);
+
+                for (i = 0; i < 9; i++)
+                    m_set_val(Cy, i, 0, m_get_val(Cy, i, 0) + 40.0);
+
+                // Iteratively refine the snake/spline
+                for (i = 0; i < Iter; i++) {
+                    int typeofcell;
+
+                    if (G[n] > 0.0) typeofcell = 0;
+                    else typeofcell = 1;
+
+                    splineenergyform01(Cx, Cy, grad_x_cpu, grad_y_cpu, ns, delta, 2.0 * dt, typeofcell);
+                }
+
+                X = getsampling(Cx, ns);
+                for (i = 0; i < Cy->m; i++)
+                    m_set_val(Cy_temp, i, 0, m_get_val(Cy, i, 0) - 40.0);
+                Y = getsampling(Cy_temp, ns);
+
+                Ix1 = linear_interp2(grad_x_cpu, X, Y);
+                Iy1 = linear_interp2(grad_x_cpu, X, Y);
+                Xs = getfdriv(Cx, ns);
+                Ys = getfdriv(Cy, ns);
+
+                Nx = v_get(Ys->dim);
+                for (i = 0; i < (int)Ys->dim; i++)
+                    v_set_val(Nx, i, v_get_val(Ys, i) / sqrt(v_get_val(Xs, i)*v_get_val(Xs, i) + v_get_val(Ys, i)*v_get_val(Ys, i)));
+
+                Ny = v_get(Xs->dim);
+                for (i = 0; i < (int)Xs->dim; i++)
+                    v_set_val(Ny, i, -1.0 * v_get_val(Xs, i) / sqrt(v_get_val(Xs, i)*v_get_val(Xs, i) + v_get_val(Ys, i)*v_get_val(Ys, i)));
+
+                W = v_get(Nx->dim);
+                for (i = 0; i < (int)Nx->dim; i++)
+                    v_set_val(W, i, m_get_val(Ix1, 0, i) * v_get_val(Nx, i) + m_get_val(Iy1, 0, i) * v_get_val(Ny, i));
+
+                V[n] = mean(W) / std_dev(W);
+
+                // Get means of X and Y values for all "snaxels" of the spline contour
+                QAX_CENTERS[k_count] = mean(X);
+                QAY_CENTERS[k_count] = mean(Y) + TOP;
+
+                k_count++;
+
+                // Free memory
+                v_free(W);
+                v_free(Ny);
+                v_free(Nx);
+                v_free(Ys);
+                v_free(Xs);
+                m_free(Iy1);
+                m_free(Ix1);
+                v_free(Y);
+                v_free(X);
+                m_free(Cy_temp);
+                m_free(Cy);
+                m_free(Cx);
+            }
+
+            // Free memory
+            v_free(y_row);
+            v_free(x_row);
+            m_free(y);
+            m_free(x);
+        }
+    }
 
     // === PHASE 4: Track cells across frames (matching cpu-cpu version) ===
-    if (num_frames > 1) printf("\nTracking cells across %d frames\n", num_frames);
-    else                printf("\nTracking cells across 1 frame\n");
-
     int num_snaxels = 20;
     ellipsetrack(cell_file, QAX_CENTERS, QAY_CENTERS, k_count, radius, num_snaxels, num_frames);
 
@@ -346,12 +448,9 @@ int main(int argc, char** argv) {
     double total_time = total_end - total_start;
 
     // Print timing results
-    printf("\n=== TIMING RESULTS (GPU-CPU Mode) ===\n");
     printf("Total time:                %.3f ms\n", total_time);
     printf("GPU->CPU data transfer:    %.3f ms\n", transfer_to_cpu_time);
     printf("CPU computation (OpenMP):  %.3f ms\n", computation_time);
-    printf("(Setup: CPU->GPU transfer: %.3f ms - not counted)\n", transfer_to_gpu_time);
-    printf("=====================================\n\n");
 
     // Cleanup
     cudaEventDestroy(transfer_to_gpu_start);
@@ -363,15 +462,20 @@ int main(int argc, char** argv) {
     free(h_grad_y);
     free(h_grad_x_from_gpu);
     free(h_grad_y_from_gpu);
+    free(V);
     free(crow);
     free(ccol);
     free(GICOV_spots);
+    free(t);
     free(G);
     free(x_result);
     free(y_result);
     free(QAX_CENTERS);
     free(QAY_CENTERS);
 
+    m_free(A);
+    m_free(celly);
+    m_free(cellx);
     m_free(grad_x);
     m_free(grad_y);
     m_free(grad_x_cpu);

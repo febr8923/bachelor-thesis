@@ -3,6 +3,10 @@
 set -e
 
 ITERATIONS="${1:-5}"
+COLD_START_FLAG=""
+if [ "$2" = "--cold_start" ]; then
+  COLD_START_FLAG="--cold_start"
+fi
 
 export TRANSFORMERS_CACHE="$SCRATCH"
 export TORCH_HOME="$SCRATCH"
@@ -29,8 +33,12 @@ for i in "${CPU_THREADS[@]}"; do
   export OMP_NUM_THREADS="$i"
   export MKL_NUM_THREADS="$i"
 
-  python benchmarks/deep_learning/conv2d_bias/conv2d_cpu_exec.py --iterations "$ITERATIONS" --data-loc cpu
-  python benchmarks/nbody/nbody_cpu_exec.py --iterations "$ITERATIONS" --data-loc cpu
+  python benchmarks/deep_learning/conv2d_bias/conv2d_cpu_exec.py --iterations "$ITERATIONS" --data-loc cpu $COLD_START_FLAG
+  python benchmarks/deep_learning/conv2d_bias/conv2d_cpu_exec.py --iterations "$ITERATIONS" --data-loc gpu $COLD_START_FLAG
+
+  python benchmarks/nbody/nbody_cpu_exec.py --iterations "$ITERATIONS" --data-loc cpu $COLD_START_FLAG
+  python benchmarks/nbody/nbody_cpu_exec.py --iterations "$ITERATIONS" --data-loc gpu $COLD_START_FLAG
+
 done
 
 # GPU benchmarks
@@ -43,8 +51,12 @@ for ((i=10; i<=100; i+=10)); do
   echo "Running with SM $i%..."
   export CUDA_MPS_ACTIVE_THREAD_PERCENTAGE="$i"
 
-  python benchmarks/deep_learning/conv2d_bias/conv2d_gpu_exec.py --iterations "$ITERATIONS" --data-loc cpu
-  python benchmarks/nbody/nbody_gpu_exec.py --iterations "$ITERATIONS" --data-loc cpu
+  python benchmarks/deep_learning/conv2d_bias/conv2d_gpu_exec.py --iterations "$ITERATIONS" --data-loc cpu $COLD_START_FLAG
+  python benchmarks/deep_learning/conv2d_bias/conv2d_gpu_exec.py --iterations "$ITERATIONS" --data-loc gpu $COLD_START_FLAG
+
+  python benchmarks/nbody/nbody_gpu_exec.py --iterations "$ITERATIONS" --data-loc cpu $COLD_START_FLAG
+  python benchmarks/nbody/nbody_gpu_exec.py --iterations "$ITERATIONS" --data-loc gpu $COLD_START_FLAG
+
 done
 
 echo quit | nvidia-cuda-mps-control

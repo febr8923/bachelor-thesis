@@ -75,7 +75,6 @@ void BFSGraph( int argc, char** argv)
 	}
 	
 	input_f = argv[1];
-	printf("Reading File\n");
 	//Read in Graph from a file
 	fp = fopen(input_f,"r");
 	if(!fp)
@@ -138,8 +137,6 @@ void BFSGraph( int argc, char** argv)
 
 	if(fp)
 		fclose(fp);    
-
-	printf("Read File\n");
 
 	// CUDA warmup - triggers driver/runtime initialization BEFORE timing
 	cudaFree(0);
@@ -205,15 +202,12 @@ void BFSGraph( int argc, char** argv)
 	cudaEventRecord(data_transfer_end, 0);
 	cudaEventSynchronize(data_transfer_end);
 
-	printf("Copied Everything to GPU memory\n");
-
 	// setup execution parameters
 	dim3  grid( num_of_blocks, 1, 1);
 	dim3  threads( num_of_threads_per_block, 1, 1);
 
 	int k=0;
-	printf("Start traversing the tree\n");
-	
+
 	// Start computation timing
 	cudaEventRecord(computation_start, 0);
 	
@@ -241,8 +235,6 @@ void BFSGraph( int argc, char** argv)
 	cudaEventRecord(computation_end, 0);
 	cudaEventSynchronize(computation_end);
 
-	printf("Kernel Executed %d times\n",k);
-
 	// copy result from device to host (timed)
 	cudaEventRecord(result_copy_start, 0);
 	cudaMemcpy( h_cost, d_cost, sizeof(int)*no_of_nodes, cudaMemcpyDeviceToHost) ;
@@ -262,19 +254,15 @@ void BFSGraph( int argc, char** argv)
 	double total_time = total_end - total_start;
 
 	// Print timing results
-	printf("\n=== TIMING RESULTS ===\n");
 	printf("Total time:                %.3f ms\n", total_time);
 	printf("CPU->GPU data transfer:    %.3f ms\n", data_transfer_time);
 	printf("Pure BFS computation:      %.3f ms\n", computation_time);
-	printf("GPU->CPU result copy:      %.3f ms\n", result_copy_time);
-	printf("======================\n\n");
 
 	//Store the result into a file
 	FILE *fpo = fopen("result.txt","w");
 	for(int i=0;i<no_of_nodes;i++)
 		fprintf(fpo,"%d) cost:%d\n",i,h_cost[i]);
 	fclose(fpo);
-	printf("Result stored in result.txt\n");
 
 	// Destroy CUDA events
 	cudaEventDestroy(data_transfer_start);

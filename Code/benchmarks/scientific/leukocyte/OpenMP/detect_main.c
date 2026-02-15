@@ -5,9 +5,6 @@ int omp_num_threads = 1;
 
 int main(int argc, char ** argv) {
 
-	// Keep track of the start time of the program
-  long long program_start_time = get_time();
-	
 	// Let the user specify the number of frames to process
 	int num_frames = 1;
 	
@@ -20,7 +17,6 @@ int main(int argc, char ** argv) {
 		num_frames = atoi(argv[1]);
 		omp_num_threads = atoi(argv[2]);
 		}
-	printf("Num of threads: %d\n", omp_num_threads);
 	// Open video file
 	char *video_file_name;
 	video_file_name = argv[3];
@@ -38,8 +34,7 @@ int main(int argc, char ** argv) {
 	
 	// Extract a cropped version of the first frame from the video file
 	MAT *image_chopped = get_frame(cell_file, 0, 1, 0);
-	printf("Detecting cells in frame 0\n");
-	
+
 	// Get gradient matrices in x and y directions
 	MAT *grad_x = gradient_x(image_chopped);
 	MAT *grad_y = gradient_y(image_chopped);
@@ -59,13 +54,9 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
-	long long GICOV_end_time = get_time();
-	
 	// Dilate the GICOV matrix
-	long long dilate_start_time = get_time();
 	MAT *strel = structuring_element(12);
 	MAT *img_dilated = dilate_f(max_gicov, strel);
-	long long dilate_end_time = get_time();
 	
 	// Find possible matches for cell centers based on GICOV and record the rows/columns in which they are found
 	pair_counter = 0;
@@ -237,27 +228,13 @@ int main(int argc, char ** argv) {
 	m_free(grad_y);
 	m_free(grad_x);
 	
-	// Report the total number of cells detected
-	printf("Cells detected: %d\n\n", k_count);
-	
-	// Report the breakdown of the detection runtime
-	printf("Detection runtime\n");
-	printf("-----------------\n");
-	printf("GICOV computation: %.5f seconds\n", ((float) (GICOV_end_time - GICOV_start_time)) / (1000*1000));
-	printf("   GICOV dilation: %.5f seconds\n", ((float) (dilate_end_time - dilate_start_time)) / (1000*1000));
-	printf("            Total: %.5f seconds\n", ((float) (get_time() - program_start_time)) / (1000*1000));
-	
 	// Now that the cells have been detected in the first frame,
 	//  track the ellipses through subsequent frames
-	if (num_frames > 1) printf("\nTracking cells across %d frames\n", num_frames);
-	else                printf("\nTracking cells across 1 frame\n");
-	long long tracking_start_time = get_time();
 	int num_snaxels = 20;
 	ellipsetrack(cell_file, QAX_CENTERS, QAY_CENTERS, k_count, radius, num_snaxels, num_frames);
-	printf("           Total: %.5f seconds\n", ((float) (get_time() - tracking_start_time)) / (float) (1000*1000*num_frames));
-	
-	// Report total program execution time
-    printf("\nTotal application run time: %.5f seconds\n", ((float) (get_time() - program_start_time)) / (1000*1000));
+	long long computation_end = get_time();
+
+	printf("CPU computation (OpenMP):  %.3f ms\n", ((float)(computation_end - GICOV_start_time)) / 1000.0f);
 
 	return 0;
 }

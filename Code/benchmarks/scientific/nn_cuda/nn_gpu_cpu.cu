@@ -7,45 +7,29 @@
  * - Data is transferred from GPU to CPU
  * - Computation happens on CPU using OpenMP
  *
- * This measures the GPU->CPU transfer overhead when data originates on GPU.
+ * The CPU computation matches nn_openmp_walltime.c exactly:
+ * same record format, same chunked processing, same neighbor update logic.
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <float.h>
-#include <vector>
 #include <math.h>
 #include <omp.h>
 #include "cuda.h"
 
-#define min( a, b )			a > b ? b : a
-#define ceilDiv( a, b )		( a + b - 1 ) / b
-#define print( x )			printf( #x ": %lu\n", (unsigned long) x )
-#define DEBUG				false
-
-#define MAX_ARGS 10
-#define REC_LENGTH 53 // size of a record in db
-#define LATITUDE_POS 28	// character position of the latitude value in each record
+// These constants match nn_openmp_walltime.c exactly
+#define REC_LENGTH 49	// size of a record in db
+#define REC_WINDOW 10	// number of records to read at a time
+#define LATITUDE_POS 28	// location of latitude coordinates in input record
 #define OPEN 10000	// initial value of nearest neighbors
 
-
-typedef struct latLong
-{
-  float lat;
-  float lng;
-} LatLong;
-
-typedef struct record
-{
-  char recString[REC_LENGTH];
-  float distance;
-} Record;
-
-int loadData(char *filename,std::vector<Record> &records,std::vector<LatLong> &locations);
-void findLowest(std::vector<Record> &records,float *distances,int numRecords,int topN);
-void printUsage();
-int parseCommandline(int argc, char *argv[], char* filename,int *r,float *lat,float *lng,
-                     int *q, int *t, int *p, int *d);
+struct neighbor {
+	char entry[REC_LENGTH];
+	double dist;
+};
 
 // Helper function to get time in milliseconds
 double get_time_ms() {
@@ -54,58 +38,146 @@ double get_time_ms() {
     return (tv.tv_sec * 1000.0) + (tv.tv_usec / 1000.0);
 }
 
-/**
- * CPU kernel using OpenMP
- * Calculates the Euclidean distance from each record to the target position
- */
-void euclid_cpu(LatLong *locations, float *distances, int numRecords, float lat, float lng)
-{
-    #pragma omp parallel for
-    for (int i = 0; i < numRecords; i++) {
-        float dlat = lat - locations[i].lat;
-        float dlng = lng - locations[i].lng;
-        distances[i] = sqrtf(dlat * dlat + dlng * dlng);
+// Load all raw record data from files into a flat buffer
+// Returns total number of records loaded
+int loadRawData(char *filelist, char **out_buffer) {
+    FILE *flist, *fp;
+    char dbname[64];
+    int totalRecords = 0;
+    int bufferCapacity = 1024;
+    char *buffer = (char *)malloc(bufferCapacity * REC_LENGTH);
+
+    flist = fopen(filelist, "r");
+    if (!flist) {
+        printf("error opening flist\n");
+        exit(1);
     }
+
+    // First file
+    if (fscanf(flist, "%s\n", dbname) != 1) {
+        fprintf(stderr, "error reading filelist\n");
+        exit(0);
+    }
+
+    fp = fopen(dbname, "r");
+    if (!fp) {
+        printf("error opening flist\n");
+        exit(1);
+    }
+
+    int done = 0;
+    while (!done) {
+        // Ensure buffer has room for REC_WINDOW more records
+        if (totalRecords + REC_WINDOW > bufferCapacity) {
+            bufferCapacity *= 2;
+            buffer = (char *)realloc(buffer, bufferCapacity * REC_LENGTH);
+        }
+
+        // Read REC_WINDOW records at a time (same as cpu-cpu)
+        int rec_count = fread(buffer + totalRecords * REC_LENGTH, REC_LENGTH, REC_WINDOW, fp);
+        totalRecords += rec_count;
+
+        if (rec_count != REC_WINDOW) {
+            if (!ferror(flist)) {
+                fclose(fp);
+                if (feof(flist))
+                    done = 1;
+                else {
+                    if (fscanf(flist, "%s\n", dbname) != 1) {
+                        fprintf(stderr, "error reading filelist\n");
+                        exit(0);
+                    }
+                    fp = fopen(dbname, "r");
+                    if (!fp) {
+                        printf("error opening a db\n");
+                        exit(1);
+                    }
+                }
+            } else {
+                perror("Error");
+                exit(0);
+            }
+        }
+    }
+
+    fclose(flist);
+    *out_buffer = buffer;
+    return totalRecords;
 }
 
-/**
-* This program finds the k-nearest neighbors
-* GPU-CPU mode: Data on GPU, computation on CPU
-**/
+void printUsage() {
+    printf("Nearest Neighbor Usage (GPU-CPU Mode)\n");
+    printf("\n");
+    printf("nn_gpu_cpu [filename] -r [int] -lat [float] -lng [float] [-hqt] [-p [int] -d [int]]\n");
+    printf("\n");
+    printf("filename     the filename that lists the data input files\n");
+    printf("-r [int]     the number of records to return (default: 10)\n");
+    printf("-lat [float] the latitude for nearest neighbors (default: 0)\n");
+    printf("-lng [float] the longitude for nearest neighbors (default: 0)\n");
+    printf("\n");
+}
+
+int parseCommandline(int argc, char *argv[], char* filename, int *r, float *lat, float *lng,
+                     int *q, int *t, int *p, int *d) {
+    int i;
+    if (argc < 2) return 1;
+    strncpy(filename, argv[1], 100);
+    char flag;
+
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            flag = argv[i][1];
+            switch (flag) {
+                case 'r': i++; *r = atoi(argv[i]); break;
+                case 'l':
+                    if (argv[i][2] == 'a') *lat = atof(argv[i+1]);
+                    else *lng = atof(argv[i+1]);
+                    i++;
+                    break;
+                case 'h': return 1;
+                case 'q': *q = 1; break;
+                case 't': *t = 1; break;
+                case 'p': i++; *p = atoi(argv[i]); break;
+                case 'd': i++; *d = atoi(argv[i]); break;
+            }
+        }
+    }
+    if ((*d >= 0 && *p < 0) || (*p >= 0 && *d < 0))
+        return 1;
+    return 0;
+}
 
 int main(int argc, char* argv[])
 {
-	int    i=0;
-	float lat, lng;
-	int quiet=0,timing=0,platform=0,device=0;
-
-    std::vector<Record> records;
-	std::vector<LatLong> locations;
+	int i = 0, j = 0, k = 0;
+	float target_lat, target_long;
+	int quiet = 0, timing = 0, platform = 0, device = 0;
 	char filename[100];
-	int resultsCount=10;
+	int resultsCount = 10;
 
-    // parse command line
-    if (parseCommandline(argc, argv, filename,&resultsCount,&lat,&lng,
-                     &quiet, &timing, &platform, &device)) {
-      printUsage();
-      return 0;
-    }
+	// Parse command line
+	if (parseCommandline(argc, argv, filename, &resultsCount, &target_lat, &target_long,
+	                     &quiet, &timing, &platform, &device)) {
+		printUsage();
+		return 0;
+	}
 
-    // Start total time measurement (includes disk I/O for fair comparison with CPU-only)
-    double total_start = get_time_ms();
+	k = resultsCount;
 
-    int numRecords = loadData(filename,records,locations);
-    double load_end = get_time_ms();
-    fprintf(stderr, "DEBUG: Loaded %d records in %.3f ms from %s\n", numRecords, load_end - total_start, filename);
-    if (resultsCount > numRecords) resultsCount = numRecords;
+	// === Load raw record data from files (not timed) ===
+	char *h_raw_records = NULL;
+	int numRecords = loadRawData(filename, &h_raw_records);
+	int bufferSize = numRecords * REC_LENGTH;
 
-    // Pointers to host memory
-	float *h_distances;
-	LatLong *h_locations;
-
-	// Pointers to device memory
-	LatLong *d_locations;
-
+	// Allocate neighbor array (same as cpu-cpu)
+	struct neighbor *neighbors = (struct neighbor *)malloc(k * sizeof(struct neighbor));
+	if (neighbors == NULL) {
+		fprintf(stderr, "no room for neighbors\n");
+		exit(0);
+	}
+	for (j = 0; j < k; j++) {
+		neighbors[j].dist = OPEN;
+	}
 
 	// Create CUDA events for GPU timing
 	cudaEvent_t transfer_to_gpu_start, transfer_to_gpu_end;
@@ -115,35 +187,75 @@ int main(int argc, char* argv[])
 	cudaEventCreate(&transfer_to_cpu_start);
 	cudaEventCreate(&transfer_to_cpu_end);
 
-	/**
-	* Allocate memory on host and device
-	*/
-	h_distances = (float *)malloc(sizeof(float) * numRecords);
-	h_locations = (LatLong *)malloc(sizeof(LatLong) * numRecords);
+	// Allocate GPU memory for raw record buffer
+	char *d_raw_records;
+	cudaMalloc((void **)&d_raw_records, bufferSize);
 
-	// Allocate GPU memory
-	cudaMalloc((void **) &d_locations, sizeof(LatLong) * numRecords);
+	// Allocate host memory for receiving data from GPU
+	char *h_raw_records_from_gpu = (char *)malloc(bufferSize);
 
 	// === PHASE 1: Simulate data being on GPU ===
-	// In a real scenario, data would already be on GPU from a previous computation.
-	// We simulate this by copying data to GPU first (not timed as part of benchmark).
 	cudaEventRecord(transfer_to_gpu_start, 0);
-	cudaMemcpy(d_locations, &locations[0], sizeof(LatLong) * numRecords, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_raw_records, h_raw_records, bufferSize, cudaMemcpyHostToDevice);
 	cudaEventRecord(transfer_to_gpu_end, 0);
 	cudaEventSynchronize(transfer_to_gpu_end);
 
+	// Start total time measurement (covers only transfer + computation)
+	double total_start = get_time_ms();
+
 	// === PHASE 2: GPU->CPU Transfer (THIS IS WHAT WE MEASURE) ===
 	cudaEventRecord(transfer_to_cpu_start, 0);
-	cudaMemcpy(h_locations, d_locations, sizeof(LatLong) * numRecords, cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_raw_records_from_gpu, d_raw_records, bufferSize, cudaMemcpyDeviceToHost);
 	cudaEventRecord(transfer_to_cpu_end, 0);
 	cudaEventSynchronize(transfer_to_cpu_end);
 
 	// === PHASE 3: CPU Computation using OpenMP ===
+	// This matches nn_openmp_walltime.c exactly: chunked processing with
+	// atof parsing, parallel distance computation, serial neighbor update.
 	double compute_start = get_time_ms();
-	euclid_cpu(h_locations, h_distances, numRecords, lat, lng);
 
-	// find the resultsCount least distances
-    findLowest(records, h_distances, numRecords, resultsCount);
+	float *z = (float *)malloc(REC_WINDOW * sizeof(float));
+	int total_processed = 0;
+
+	while (total_processed < numRecords) {
+		// Determine how many records in this chunk
+		int rec_count = REC_WINDOW;
+		if (total_processed + rec_count > numRecords)
+			rec_count = numRecords - total_processed;
+
+		char *sandbox = h_raw_records_from_gpu + total_processed * REC_LENGTH;
+
+		// Parallel distance computation (same as cpu-cpu)
+		#pragma omp parallel for shared(z, target_lat, target_long) private(i)
+		for (i = 0; i < rec_count; i++) {
+			char *rec_iter = sandbox + (i * REC_LENGTH + LATITUDE_POS - 1);
+			float tmp_lat = atof(rec_iter);
+			float tmp_long = atof(rec_iter + 5);
+			z[i] = sqrt(((tmp_lat - target_lat) * (tmp_lat - target_lat)) +
+			            ((tmp_long - target_long) * (tmp_long - target_long)));
+		}
+		#pragma omp barrier
+
+		// Serial neighbor update (same as cpu-cpu)
+		for (i = 0; i < rec_count; i++) {
+			float max_dist = -1;
+			int max_idx = 0;
+			for (j = 0; j < k; j++) {
+				if (neighbors[j].dist > max_dist) {
+					max_dist = neighbors[j].dist;
+					max_idx = j;
+				}
+			}
+			if (z[i] < neighbors[max_idx].dist) {
+				sandbox[(i + 1) * REC_LENGTH - 1] = '\0';
+				strcpy(neighbors[max_idx].entry, sandbox + i * REC_LENGTH);
+				neighbors[max_idx].dist = z[i];
+			}
+		}
+
+		total_processed += rec_count;
+	}
+
 	double compute_end = get_time_ms();
 
 	// End total time measurement
@@ -158,18 +270,9 @@ int main(int argc, char* argv[])
 	double total_time = total_end - total_start;
 
 	// Print timing results
-	printf("\n=== TIMING RESULTS (GPU-CPU Mode) ===\n");
 	printf("Total time:                %.3f ms\n", total_time);
 	printf("GPU->CPU data transfer:    %.3f ms\n", transfer_to_cpu_time);
 	printf("CPU computation (OpenMP):  %.3f ms\n", computation_time);
-	printf("(Setup: CPU->GPU transfer: %.3f ms - not counted)\n", transfer_to_gpu_time);
-	printf("=====================================\n\n");
-
-    // print out results
-    if (!quiet)
-    for(i=0;i<resultsCount;i++) {
-      printf("%s --> Distance=%f\n",records[i].recString,records[i].distance);
-    }
 
 	// Destroy CUDA events
 	cudaEventDestroy(transfer_to_gpu_start);
@@ -177,161 +280,11 @@ int main(int argc, char* argv[])
 	cudaEventDestroy(transfer_to_cpu_start);
 	cudaEventDestroy(transfer_to_cpu_end);
 
-    free(h_distances);
-    free(h_locations);
-	cudaFree(d_locations);
+	free(z);
+	free(neighbors);
+	free(h_raw_records);
+	free(h_raw_records_from_gpu);
+	cudaFree(d_raw_records);
 
 	return 0;
-}
-
-int loadData(char *filename,std::vector<Record> &records,std::vector<LatLong> &locations){
-    FILE   *flist,*fp;
-	int    i=0;
-	char dbname[64];
-	int recNum=0;
-
-    /**Main processing **/
-
-    flist = fopen(filename, "r");
-	while(!feof(flist)) {
-		/**
-		* Read in all records of length REC_LENGTH
-		* If this is the last file in the filelist, then done
-		* else open next file to be read next iteration
-		*/
-		if(fscanf(flist, "%s\n", dbname) != 1) {
-            fprintf(stderr, "error reading filelist\n");
-            exit(0);
-        }
-        fp = fopen(dbname, "r");
-        if(!fp) {
-            printf("error opening a db\n");
-            exit(1);
-        }
-        // read each record
-        while(!feof(fp)){
-            Record record;
-            LatLong latLong;
-            fgets(record.recString,49,fp);
-            fgetc(fp); // newline
-            if (feof(fp)) break;
-
-            // parse for lat and long
-            char substr[6];
-
-            for(i=0;i<5;i++) substr[i] = *(record.recString+i+28);
-            substr[5] = '\0';
-            latLong.lat = atof(substr);
-
-            for(i=0;i<5;i++) substr[i] = *(record.recString+i+33);
-            substr[5] = '\0';
-            latLong.lng = atof(substr);
-
-            locations.push_back(latLong);
-            records.push_back(record);
-            recNum++;
-        }
-        fclose(fp);
-    }
-    fclose(flist);
-    return recNum;
-}
-
-void findLowest(std::vector<Record> &records,float *distances,int numRecords,int topN){
-  int i,j;
-  float val;
-  int minLoc;
-  Record *tempRec;
-  float tempDist;
-
-  for(i=0;i<topN;i++) {
-    minLoc = i;
-    for(j=i;j<numRecords;j++) {
-      val = distances[j];
-      if (val < distances[minLoc]) minLoc = j;
-    }
-    // swap locations and distances
-    tempRec = &records[i];
-    records[i] = records[minLoc];
-    records[minLoc] = *tempRec;
-
-    tempDist = distances[i];
-    distances[i] = distances[minLoc];
-    distances[minLoc] = tempDist;
-
-    // add distance to the min we just found
-    records[i].distance = distances[i];
-  }
-}
-
-int parseCommandline(int argc, char *argv[], char* filename,int *r,float *lat,float *lng,
-                     int *q, int *t, int *p, int *d){
-    int i;
-    if (argc < 2) return 1; // error
-    strncpy(filename,argv[1],100);
-    char flag;
-
-    for(i=1;i<argc;i++) {
-      if (argv[i][0]=='-') {// flag
-        flag = argv[i][1];
-          switch (flag) {
-            case 'r': // number of results
-              i++;
-              *r = atoi(argv[i]);
-              break;
-            case 'l': // lat or lng
-              if (argv[i][2]=='a') {//lat
-                *lat = atof(argv[i+1]);
-              }
-              else {//lng
-                *lng = atof(argv[i+1]);
-              }
-              i++;
-              break;
-            case 'h': // help
-              return 1;
-            case 'q': // quiet
-              *q = 1;
-              break;
-            case 't': // timing
-              *t = 1;
-              break;
-            case 'p': // platform
-              i++;
-              *p = atoi(argv[i]);
-              break;
-            case 'd': // device
-              i++;
-              *d = atoi(argv[i]);
-              break;
-        }
-      }
-    }
-    if ((*d >= 0 && *p<0) || (*p>=0 && *d<0)) // both p and d must be specified if either are specified
-      return 1;
-    return 0;
-}
-
-void printUsage(){
-  printf("Nearest Neighbor Usage (GPU-CPU Mode)\n");
-  printf("\n");
-  printf("nn_gpu_cpu [filename] -r [int] -lat [float] -lng [float] [-hqt] [-p [int] -d [int]]\n");
-  printf("\n");
-  printf("This mode simulates data starting on GPU, transferring to CPU for computation.\n");
-  printf("\n");
-  printf("example:\n");
-  printf("$ ./nn_gpu_cpu filelist.txt -r 5 -lat 30 -lng 90\n");
-  printf("\n");
-  printf("filename     the filename that lists the data input files\n");
-  printf("-r [int]     the number of records to return (default: 10)\n");
-  printf("-lat [float] the latitude for nearest neighbors (default: 0)\n");
-  printf("-lng [float] the longitude for nearest neighbors (default: 0)\n");
-  printf("\n");
-  printf("-h, --help   Display the help file\n");
-  printf("-q           Quiet mode. Suppress all text output.\n");
-  printf("-t           Print timing information.\n");
-  printf("\n");
-  printf("-p [int]     Choose the platform (must choose both platform and device)\n");
-  printf("-d [int]     Choose the device (must choose both platform and device)\n");
-  printf("\n");
 }

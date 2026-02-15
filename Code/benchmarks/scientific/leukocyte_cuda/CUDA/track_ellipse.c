@@ -76,9 +76,6 @@ void ellipsetrack(avi_t *video, double *xc0, double *yc0, int Nc, int R, int Np,
 	// Process each frame sequentially
 	int frame_num;
 	for (frame_num = 1; frame_num <= Nf; frame_num++) {	 
-		printf("\rProcessing frame %d / %d", frame_num, Nf);
-		fflush(stdout);
-		
 		// Get the current video frame and its dimensions
 		MAT *I = get_frame(video, frame_num, 0, 1);
 		int Ih = I->m;
@@ -222,11 +219,6 @@ void ellipsetrack(avi_t *video, double *xc0, double *yc0, int Nc, int R, int Np,
 	free(Iy);
 	free(IE);
 	
-	// Report average processing time per frame
-	printf("\n\nTracking runtime (average per frame):\n");
-	printf("------------------------------------\n");
-	printf("MGVF computation: %.5f seconds\n", ((float) (MGVF_time)) / (float) (1000*1000*Nf));
-	printf(" Snake evolution: %.5f seconds\n", ((float) (snake_time)) / (float) (1000*1000*Nf));
 }
 
 

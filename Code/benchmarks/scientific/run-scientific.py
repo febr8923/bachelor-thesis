@@ -32,8 +32,8 @@ except ImportError:
     WATCHER_AVAILABLE = False
     print("Warning: watcher module not available, memory monitoring disabled")
 
-NR_ITERATIONS = 5
-NR_WARMUP_ITERATIONS = 2
+NR_ITERATIONS = 50
+NR_WARMUP_ITERATIONS = 5
 
 # Benchmark configurations
 # Note: paths are relative to the benchmark's working directory
@@ -105,10 +105,12 @@ class BenchmarkResult:
             "exec_loc": [],      # where execution happens: cpu or gpu
             "sm_percentage": [],  # GPU SM percentage (via CUDA_MPS_ACTIVE_THREAD_PERCENTAGE)
             "num_threads": [],    # CPU thread count (via OMP_NUM_THREADS)
+            "cold_start": [],    # whether this is a cold start measurement
             "iteration": [],
             "total_time_ms": [],
             "data_transfer_time_ms": [],
             "computation_time_ms": [],
+            "wall_time_ms": [],  # full subprocess wall time including startup overhead
             "avg_total_ms": [],
             "max_total_ms": [],
             "min_total_ms": [],
@@ -125,7 +127,8 @@ class BenchmarkResult:
 
     def add_raw_results(self, benchmark_name, data_loc, exec_loc,
                         total_times, transfer_times, computation_times,
-                        sm_percentage=100, num_threads=4):
+                        sm_percentage=100, num_threads=4,
+                        cold_start=False, wall_times=None):
         """Add raw benchmark results and compute statistics."""
         n = len(total_times)
         if n == 0:
@@ -134,6 +137,8 @@ class BenchmarkResult:
         # Handle None values in transfer and computation times
         transfer_times = [t if t is not None else 0.0 for t in transfer_times]
         computation_times = [c if c is not None else 0.0 for c in computation_times]
+        if wall_times is None:
+            wall_times = [0.0] * n
 
         datapoint = pd.DataFrame({
             "benchmark": [benchmark_name],
@@ -141,10 +146,12 @@ class BenchmarkResult:
             "exec_loc": [exec_loc],
             "sm_percentage": [sm_percentage],
             "num_threads": [num_threads],
+            "cold_start": [cold_start],
             "iteration": [n],
             "total_time_ms": [total_times[-1] if total_times else 0],  # last iteration
             "data_transfer_time_ms": [transfer_times[-1] if transfer_times else 0],
             "computation_time_ms": [computation_times[-1] if computation_times else 0],
+            "wall_time_ms": [wall_times[-1] if wall_times else 0],
             "avg_total_ms": [sum(total_times) / n],
             "max_total_ms": [max(total_times)],
             "min_total_ms": [min(total_times)],
@@ -176,7 +183,7 @@ def parse_output(output, patterns):
 
 
 def run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
-                            sm_percentage=100, num_threads=4):
+                            sm_percentage=100, num_threads=72):
     """
     Run a single benchmark iteration.
 
@@ -297,9 +304,13 @@ def run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
                 timing_result["transfer_ms"] = parsed.get("data_transfer")
                 timing_result["computation_ms"] = parsed.get("computation")
             else:
-                # CPU version reports total time in seconds
+                # CPU version: prefer computation-only timer (ms) over total (seconds)
+                cpu_computation = parsed.get("cpu_computation")
                 cpu_total = parsed.get("cpu_total")
-                if cpu_total:
+                if cpu_computation is not None:
+                    timing_result["total_ms"] = cpu_computation
+                    timing_result["computation_ms"] = cpu_computation
+                elif cpu_total:
                     timing_result["total_ms"] = cpu_total * 1000  # convert to ms
                 else:
                     timing_result["total_ms"] = wall_time_ms
@@ -310,9 +321,13 @@ def run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
                 timing_result["transfer_ms"] = parsed.get("data_transfer")
                 timing_result["computation_ms"] = parsed.get("computation")
             else:
-                # CPU version reports total time in seconds
+                # CPU version: prefer computation-only timer (ms) over total (seconds)
+                cpu_computation = parsed.get("cpu_computation")
                 cpu_total = parsed.get("cpu_total")
-                if cpu_total:
+                if cpu_computation is not None:
+                    timing_result["total_ms"] = cpu_computation
+                    timing_result["computation_ms"] = cpu_computation
+                elif cpu_total:
                     timing_result["total_ms"] = cpu_total * 1000  # convert to ms
                 else:
                     timing_result["total_ms"] = wall_time_ms
@@ -337,7 +352,7 @@ def run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
 
 def run_benchmark(benchmark_name, data_loc, exec_loc, base_dir,
                   nr_iterations=NR_ITERATIONS, nr_warmup=NR_WARMUP_ITERATIONS,
-                  sm_percentage=100, num_threads=4):
+                  sm_percentage=100, num_threads=4, cold_start=False):
     """
     Run benchmark multiple times with warmup iterations.
 
@@ -350,12 +365,17 @@ def run_benchmark(benchmark_name, data_loc, exec_loc, base_dir,
         nr_warmup: Number of warmup iterations
         sm_percentage: GPU SM percentage (1-100) via CUDA_MPS_ACTIVE_THREAD_PERCENTAGE
         num_threads: CPU thread count via OMP_NUM_THREADS
+        cold_start: If True, skip warmup and run only 1 measurement iteration
 
     Returns:
         Dictionary with lists of timing results
     """
+    if cold_start:
+        nr_warmup = 0
+        nr_iterations = 1
+
     config_str = f"SM={sm_percentage}%" if exec_loc == "gpu" else f"threads={num_threads}"
-    print(f"\n--- Running {benchmark_name} (data: {data_loc}, exec: {exec_loc}, {config_str}) ---")
+    print(f"\n--- Running {benchmark_name} (data: {data_loc}, exec: {exec_loc}, {config_str}, cold_start={cold_start}) ---")
 
     # Warmup iterations
     print(f"Running {nr_warmup} warmup iterations...")
@@ -370,6 +390,7 @@ def run_benchmark(benchmark_name, data_loc, exec_loc, base_dir,
     total_times = []
     transfer_times = []
     computation_times = []
+    wall_times = []
 
     for i in range(nr_iterations):
         result = run_benchmark_iteration(benchmark_name, data_loc, exec_loc, base_dir,
@@ -378,7 +399,8 @@ def run_benchmark(benchmark_name, data_loc, exec_loc, base_dir,
             total_times.append(result["total_ms"])
             transfer_times.append(result.get("transfer_ms"))
             computation_times.append(result.get("computation_ms"))
-            print(f"  Iteration {i+1}: total={result['total_ms']:.2f}ms")
+            wall_times.append(result["wall_time_ms"])
+            print(f"  Iteration {i+1}: total={result['total_ms']:.2f}ms, wall={result['wall_time_ms']:.2f}ms")
         else:
             print(f"  Iteration {i+1}: FAILED")
 
@@ -388,11 +410,12 @@ def run_benchmark(benchmark_name, data_loc, exec_loc, base_dir,
     return {
         "total_times": total_times,
         "transfer_times": transfer_times,
-        "computation_times": computation_times
+        "computation_times": computation_times,
+        "wall_times": wall_times
     }
 
 
-def run_all_modes(benchmark_name, base_dir, results, watcher=None):  # noqa: ARG001 watcher
+def run_all_modes(benchmark_name, base_dir, results, watcher=None, cold_start=False):  # noqa: ARG001 watcher
     """
     Run benchmark in all supported modes:
     - cpu-cpu: Data on CPU, execution on CPU
@@ -419,7 +442,8 @@ def run_all_modes(benchmark_name, base_dir, results, watcher=None):  # noqa: ARG
 
     for data_loc, exec_loc in modes:
         try:
-            raw_results = run_benchmark(benchmark_name, data_loc, exec_loc, base_dir)
+            raw_results = run_benchmark(benchmark_name, data_loc, exec_loc, base_dir,
+                                        cold_start=cold_start)
             if raw_results["total_times"]:
                 results.add_raw_results(
                     benchmark_name=benchmark_name,
@@ -427,14 +451,17 @@ def run_all_modes(benchmark_name, base_dir, results, watcher=None):  # noqa: ARG
                     exec_loc=exec_loc,
                     total_times=raw_results["total_times"],
                     transfer_times=raw_results["transfer_times"],
-                    computation_times=raw_results["computation_times"]
+                    computation_times=raw_results["computation_times"],
+                    cold_start=cold_start,
+                    wall_times=raw_results["wall_times"]
                 )
         except Exception as e:
             print(f"Error running {benchmark_name} ({data_loc}->{exec_loc}): {e}")
 
 
 def benchmark_changing_sm_percentage(benchmark_name, base_dir, results,
-                                      nr_iterations=NR_ITERATIONS, nr_warmup=NR_WARMUP_ITERATIONS):
+                                      nr_iterations=NR_ITERATIONS, nr_warmup=NR_WARMUP_ITERATIONS,
+                                      cold_start=False):
     """
     Run GPU benchmark with varying SM percentages (10%, 20%, ..., 100%).
     Uses CUDA_MPS_ACTIVE_THREAD_PERCENTAGE environment variable.
@@ -451,11 +478,12 @@ def benchmark_changing_sm_percentage(benchmark_name, base_dir, results,
 
     for sm_pct in range(10, 101, 10):
         print(f"\n--- SM Percentage: {sm_pct}% ---")
+        os.environ['CUDA_MPS_ACTIVE_THREAD_PERCENTAGE'] = f"{sm_pct}"
         try:
             raw_results = run_benchmark(
                 benchmark_name, data_loc, exec_loc, base_dir,
                 nr_iterations=nr_iterations, nr_warmup=nr_warmup,
-                sm_percentage=sm_pct
+                sm_percentage=sm_pct, cold_start=cold_start
             )
 
             if raw_results["total_times"]:
@@ -466,7 +494,9 @@ def benchmark_changing_sm_percentage(benchmark_name, base_dir, results,
                     total_times=raw_results["total_times"],
                     transfer_times=raw_results["transfer_times"],
                     computation_times=raw_results["computation_times"],
-                    sm_percentage=sm_pct
+                    sm_percentage=sm_pct,
+                    cold_start=cold_start,
+                    wall_times=raw_results["wall_times"]
                 )
         except Exception as e:
             print(f"Error at SM {sm_pct}%: {e}")
@@ -475,7 +505,7 @@ def benchmark_changing_sm_percentage(benchmark_name, base_dir, results,
 
 def benchmark_changing_num_threads(benchmark_name, base_dir, results,
                                     nr_iterations=NR_ITERATIONS, nr_warmup=NR_WARMUP_ITERATIONS,
-                                    thread_counts=None):
+                                    thread_counts=None, cold_start=False):
     """
     Run CPU benchmark with varying thread counts.
     Uses OMP_NUM_THREADS and MKL_NUM_THREADS environment variables.
@@ -502,7 +532,7 @@ def benchmark_changing_num_threads(benchmark_name, base_dir, results,
             raw_results = run_benchmark(
                 benchmark_name, data_loc, exec_loc, base_dir,
                 nr_iterations=nr_iterations, nr_warmup=nr_warmup,
-                num_threads=num_threads
+                num_threads=num_threads, cold_start=cold_start
             )
 
             if raw_results["total_times"]:
@@ -513,7 +543,9 @@ def benchmark_changing_num_threads(benchmark_name, base_dir, results,
                     total_times=raw_results["total_times"],
                     transfer_times=raw_results["transfer_times"],
                     computation_times=raw_results["computation_times"],
-                    num_threads=num_threads
+                    num_threads=num_threads,
+                    cold_start=cold_start,
+                    wall_times=raw_results["wall_times"]
                 )
         except Exception as e:
             print(f"Error at {num_threads} threads: {e}")
@@ -522,7 +554,7 @@ def benchmark_changing_num_threads(benchmark_name, base_dir, results,
 
 def benchmark_gpu_cpu_changing_num_threads(benchmark_name, base_dir, results,
                                             nr_iterations=NR_ITERATIONS, nr_warmup=NR_WARMUP_ITERATIONS,
-                                            thread_counts=None):
+                                            thread_counts=None, cold_start=False):
     """
     Run GPU-CPU hybrid benchmark with varying thread counts.
     Uses OMP_NUM_THREADS for the CPU computation part.
@@ -554,7 +586,7 @@ def benchmark_gpu_cpu_changing_num_threads(benchmark_name, base_dir, results,
             raw_results = run_benchmark(
                 benchmark_name, data_loc, exec_loc, base_dir,
                 nr_iterations=nr_iterations, nr_warmup=nr_warmup,
-                num_threads=num_threads
+                num_threads=num_threads, cold_start=cold_start
             )
 
             if raw_results["total_times"]:
@@ -565,7 +597,9 @@ def benchmark_gpu_cpu_changing_num_threads(benchmark_name, base_dir, results,
                     total_times=raw_results["total_times"],
                     transfer_times=raw_results["transfer_times"],
                     computation_times=raw_results["computation_times"],
-                    num_threads=num_threads
+                    num_threads=num_threads,
+                    cold_start=cold_start,
+                    wall_times=raw_results["wall_times"]
                 )
         except Exception as e:
             print(f"Error at {num_threads} threads: {e}")
@@ -654,6 +688,11 @@ Examples:
         default="1,2,4,8,16,32,64",
         help="Comma-separated list of thread counts for sweep-threads mode (default: 1,2,4,8,16,32,64)"
     )
+    parser.add_argument(
+        "--cold_start",
+        action="store_true",
+        help="Enable cold start (no warmup, single iteration)"
+    )
 
     args = parser.parse_args()
 
@@ -687,6 +726,7 @@ Examples:
     print("=" * 60)
     print(f"Benchmarks: {', '.join(benchmarks)}")
     print(f"Mode: {args.mode}")
+    print(f"Cold start: {args.cold_start}")
     print(f"Iterations: {args.iterations} (warmup: {args.warmup})")
     print(f"Base directory: {base_dir}")
     if args.mode in ["sweep-threads", "sweep-gpu-cpu-threads"]:
@@ -715,7 +755,8 @@ Examples:
             try:
                 benchmark_changing_sm_percentage(
                     benchmark, base_dir, results,
-                    nr_iterations=args.iterations, nr_warmup=args.warmup
+                    nr_iterations=args.iterations, nr_warmup=args.warmup,
+                    cold_start=args.cold_start
                 )
             except Exception as e:
                 print(f"Error running {benchmark} sweep-sm: {e}")
@@ -747,7 +788,7 @@ Examples:
                 benchmark_changing_num_threads(
                     benchmark, base_dir, results,
                     nr_iterations=args.iterations, nr_warmup=args.warmup,
-                    thread_counts=thread_counts
+                    thread_counts=thread_counts, cold_start=args.cold_start
                 )
             except Exception as e:
                 print(f"Error running {benchmark} sweep-threads: {e}")
@@ -782,7 +823,7 @@ Examples:
                 benchmark_gpu_cpu_changing_num_threads(
                     benchmark, base_dir, results,
                     nr_iterations=args.iterations, nr_warmup=args.warmup,
-                    thread_counts=thread_counts
+                    thread_counts=thread_counts, cold_start=args.cold_start
                 )
             except Exception as e:
                 print(f"Error running {benchmark} sweep-gpu-cpu-threads: {e}")
@@ -854,7 +895,8 @@ Examples:
                     raw_results = run_benchmark(
                         benchmark, data_loc, exec_loc, base_dir,
                         nr_iterations=args.iterations,
-                        nr_warmup=args.warmup
+                        nr_warmup=args.warmup,
+                        cold_start=args.cold_start
                     )
 
                     if raw_results["total_times"]:
@@ -864,7 +906,9 @@ Examples:
                             exec_loc=exec_loc,
                             total_times=raw_results["total_times"],
                             transfer_times=raw_results["transfer_times"],
-                            computation_times=raw_results["computation_times"]
+                            computation_times=raw_results["computation_times"],
+                            cold_start=args.cold_start,
+                            wall_times=raw_results["wall_times"]
                         )
                 except Exception as e:
                     print(f"Error running {benchmark} ({data_loc}->{exec_loc}): {e}")
@@ -876,10 +920,11 @@ Examples:
 
     # Save results with mode-specific filename
     output_dir = os.path.join(base_dir, args.output_dir)
+    cold_suffix = f"-{args.cold_start}"
     if args.mode.startswith("sweep-"):
-        results.save_to_csv(output_dir, f"scientific-benchmarks-{args.mode}")
+        results.save_to_csv(output_dir, f"scientific-benchmarks-{args.mode}{cold_suffix}")
     else:
-        results.save_to_csv(output_dir, "scientific-benchmarks")
+        results.save_to_csv(output_dir, f"scientific-benchmarks{cold_suffix}")
 
     # Print summary
     print("\n" + "=" * 60)

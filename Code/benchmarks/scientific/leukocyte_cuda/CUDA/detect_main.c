@@ -43,8 +43,6 @@ int main(int argc, char ** argv) {
 	
 	// Extract a cropped version of the first frame from the video file
 	MAT *image_chopped = get_frame(cell_file, 0, 1, 0);
-	printf("Detecting cells in frame 0\n");
-	
 	// Get gradient matrices in x and y directions
 	MAT *grad_x = gradient_x(image_chopped);
 	MAT *grad_y = gradient_y(image_chopped);
@@ -229,44 +227,19 @@ int main(int argc, char ** argv) {
 	m_free(grad_y);
 	m_free(grad_x);
 	
-	// Report the total number of cells detected
-	printf("Cells detected: %d\n\n", k_count);
-	
-	// Report the breakdown of the detection runtime
-	printf("Detection runtime\n");
-	printf("-----------------\n");
-	printf("GICOV computation: %.5f seconds\n", ((float) (GICOV_end_time - GICOV_start_time)) / (1000*1000));
-	printf("   GICOV dilation: %.5f seconds\n", ((float) (dilate_end_time - dilate_start_time)) / (1000*1000));
-	printf("            Total: %.5f seconds\n", ((float) (get_time() - program_start_time)) / (1000*1000));
-	
 	// Now that the cells have been detected in the first frame,
 	//  track the ellipses through subsequent frames
-	if (num_frames > 1) printf("\nTracking cells across %d frames\n", num_frames);
-	else                printf("\nTracking cells across 1 frame\n");
-	long long tracking_start_time = get_time();
 	int num_snaxels = 20;
 	ellipsetrack(cell_file, QAX_CENTERS, QAY_CENTERS, k_count, radius, num_snaxels, num_frames);
-	printf("           Total: %.5f seconds\n", ((float) (get_time() - tracking_start_time)) / (float) (1000*1000*num_frames));	
-	
-	// Report total program execution time
-    printf("\nTotal application run time: %.5f seconds\n", ((float) (get_time() - program_start_time)) / (1000*1000));
-
 	// Calculate total transfer and compute times
 	float total_transfer_ms = g_gicov_transfer_time + g_mgvf_transfer_time;
 	float total_compute_ms = g_gicov_compute_time + g_dilate_compute_time + g_mgvf_compute_time;
 	float total_time_ms = ((float) (get_time() - program_start_time)) / 1000.0f;
 
-	// Print detailed timing results in standard format
-	printf("\n=== TIMING RESULTS ===\n");
+	// Print timing results
 	printf("Total time:                %.3f ms\n", total_time_ms);
 	printf("CPU->GPU data transfer:    %.3f ms\n", total_transfer_ms);
 	printf("Pure computation:          %.3f ms\n", total_compute_ms);
-	printf("  - GICOV transfer:        %.3f ms\n", g_gicov_transfer_time);
-	printf("  - GICOV compute:         %.3f ms\n", g_gicov_compute_time);
-	printf("  - Dilate compute:        %.3f ms\n", g_dilate_compute_time);
-	printf("  - MGVF transfer:         %.3f ms\n", g_mgvf_transfer_time);
-	printf("  - MGVF compute:          %.3f ms\n", g_mgvf_compute_time);
-	printf("======================\n\n");
 
 	return 0;
 }

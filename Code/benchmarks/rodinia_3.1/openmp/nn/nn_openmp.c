@@ -7,7 +7,7 @@
 
 #define MAX_ARGS 10
 #define REC_LENGTH 49	// size of a record in db
-#define REC_WINDOW 10	// number of records to read at a time
+#define REC_WINDOW 1000	// number of records to read at a time
 #define LATITUDE_POS 28	// location of latitude coordinates in input record
 #define OPEN 10000	// initial value of nearest neighbors
 struct neighbor {
@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
 
 	float *z;
 	z  = (float *) malloc(REC_WINDOW * sizeof(float));
+	double total_start_time = omp_get_wtime();
 
 	while(!done) {
 		//Read in REC_WINDOW number of records
@@ -142,6 +143,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}//End while loop
+	double total_end_time = omp_get_wtime();
 
 	fprintf(stderr, "The %d nearest neighbors are:\n", k);
 	for( j = 0 ; j < k ; j++ ) {
@@ -153,7 +155,8 @@ int main(int argc, char* argv[]) {
 	
 
     long long time1 = clock();
-    printf("total time : %15.12f s", (float) (time1 - time0) / 1000000);
+    printf("\n===== OpenMP Execution Timing =====\n");
+    printf("Execution time: %lf seconds\n", total_end_time - total_start_time);
     return 0;
 }
 

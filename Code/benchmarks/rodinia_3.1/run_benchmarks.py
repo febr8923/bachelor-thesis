@@ -2,7 +2,7 @@
 """
 Rodinia Benchmark Runner
 
-Runs BFS, NN, and Leukocyte benchmarks in four execution modes:
+Runs BFS, NN, and Hotspot3D benchmarks in four execution modes:
   - cpu:     OpenMP (data on CPU, execution on CPU)
   - gpu-cpu: Data moved to GPU then back, computation on CPU (OpenMP)
   - gpu-gpu: CUDA with timer starting after alloc + H2D transfer
@@ -34,8 +34,8 @@ RODINIA_ROOT = os.path.dirname(os.path.abspath(__file__))
 BFS_INPUT = os.path.join(RODINIA_ROOT, "data", "bfs", "graph1MW_6.txt")
 NN_FILELIST = os.path.join(RODINIA_ROOT, "data", "nn", "filelist.txt")
 NN_DATA_DIR = os.path.join(RODINIA_ROOT, "data", "nn")
-LEUKOCYTE_INPUT = os.path.join(RODINIA_ROOT, "data", "leukocyte", "testfile.avi")
-LEUKOCYTE_FRAMES = "5"
+HOTSPOT3D_POWER = os.path.join(RODINIA_ROOT, "data", "hotspot3D", "power_512x8")
+HOTSPOT3D_TEMP = os.path.join(RODINIA_ROOT, "data", "hotspot3D", "temp_512x8")
 
 # Default CSV output
 DEFAULT_CSV = os.path.join(RODINIA_ROOT, "benchmark_results.csv")
@@ -91,25 +91,25 @@ BENCHMARKS = {
             "cwd": NN_DATA_DIR,
         },
     },
-    "leukocyte": {
+    "hotspot3D": {
         ("cpu", "cpu"): {
-            "exe": "openmp/leukocyte/OpenMP/leukocyte",
-            "args": lambda t: [LEUKOCYTE_FRAMES, str(t), LEUKOCYTE_INPUT],
+            "exe": "openmp/hotspot3D/3D",
+            "args": lambda _: ["512", "8", "100", HOTSPOT3D_POWER, HOTSPOT3D_TEMP, "output.out"],
             "mode": "cpu",
         },
         ("gpu", "cpu"): {
-            "exe": "gpu-cpu/leukocyte/leukocyte_gpu_cpu",
-            "args": lambda t: [LEUKOCYTE_FRAMES, str(t), LEUKOCYTE_INPUT],
+            "exe": "gpu-cpu/hotspot3D/3D_gpu_cpu",
+            "args": lambda _: ["512", "8", "100", HOTSPOT3D_POWER, HOTSPOT3D_TEMP, "output.out"],
             "mode": "gpu-cpu",
         },
         ("gpu", "gpu"): {
-            "exe": "gpu-gpu/leukocyte/leukocyte_gpu_gpu",
-            "args": lambda _: [LEUKOCYTE_INPUT, LEUKOCYTE_FRAMES],
+            "exe": "gpu-gpu/hotspot3D/3D_gpu_gpu",
+            "args": lambda _: ["512", "8", "100", HOTSPOT3D_POWER, HOTSPOT3D_TEMP, "output.out"],
             "mode": "gpu-gpu",
         },
         ("cpu", "gpu"): {
-            "exe": "cuda/leukocyte/CUDA/leukocyte",
-            "args": lambda _: [LEUKOCYTE_INPUT, LEUKOCYTE_FRAMES],
+            "exe": "cuda/hotspot3D/3D",
+            "args": lambda _: ["512", "8", "100", HOTSPOT3D_POWER, HOTSPOT3D_TEMP, "output.out"],
             "mode": "gpu",
         },
     },
@@ -121,18 +121,18 @@ BENCHMARKS = {
 
 # Regex patterns for extracting timing values from benchmark output
 TIMING_PATTERNS = {
+    "execution_time": [
+        re.compile(r"Execution time[^:]*:\s*([\d.]+)\s*(?:seconds|s)?", re.IGNORECASE),
+    ],
+    "transfer_time_h2d": [
+        re.compile(r"Data transfer time \(H2D\):\s*([\d.]+)\s*(?:seconds|s)?", re.IGNORECASE),
+    ],
+    "transfer_time_d2h": [
+        re.compile(r"Data transfer time \(D2H\):\s*([\d.]+)\s*(?:seconds|s)?", re.IGNORECASE),
+    ],
     "total_time": [
         re.compile(r"Total time[^:]*:\s*([\d.]+)\s*(?:seconds|s)?", re.IGNORECASE),
         re.compile(r"Total application run time:\s*([\d.]+)\s*seconds", re.IGNORECASE),
-        re.compile(r"total time\s*:\s*([\d.]+)\s*s", re.IGNORECASE),
-    ],
-    "compute_time": [
-        re.compile(r"Compute time[^:]*:\s*([\d.]+)", re.IGNORECASE),
-        re.compile(r"Computation time[^:]*:\s*([\d.]+)\s*seconds", re.IGNORECASE),
-        re.compile(r"GICOV computation:\s*([\d.]+)\s*seconds", re.IGNORECASE),
-    ],
-    "transfer_time": [
-        re.compile(r"Data transfer time[^:]*:\s*([\d.]+)\s*seconds", re.IGNORECASE),
     ],
 }
 
@@ -140,9 +140,10 @@ TIMING_PATTERNS = {
 def parse_timing(output):
     """Parse timing values from benchmark stdout."""
     result = {
+        "execution_time": None,
+        "transfer_time_h2d": None,
+        "transfer_time_d2h": None,
         "total_time": None,
-        "compute_time": None,
-        "transfer_time": None,
     }
 
     for key, patterns in TIMING_PATTERNS.items():
@@ -234,12 +235,14 @@ def run_benchmark(benchmark, model_location, execution_location, thread_percenta
         timing, output = run_once(exe_path, args, env, cwd=run_cwd)
         if timing is None:
             continue
-        if verbose and timing["total_time"] is not None:
-            print(f"    total={timing['total_time']:.6f}s", end="")
-            if timing["compute_time"] is not None:
-                print(f"  compute={timing['compute_time']:.6f}s", end="")
-            if timing["transfer_time"] is not None:
-                print(f"  transfer={timing['transfer_time']:.6f}s", end="")
+        if verbose and timing["execution_time"] is not None:
+            print(f"    execution={timing['execution_time']:.6f}s", end="")
+            if timing["transfer_time_h2d"] is not None:
+                print(f"  h2d={timing['transfer_time_h2d']:.6f}s", end="")
+            if timing["transfer_time_d2h"] is not None:
+                print(f"  d2h={timing['transfer_time_d2h']:.6f}s", end="")
+            if timing["total_time"] is not None:
+                print(f"  total={timing['total_time']:.6f}s", end="")
             print()
         timings.append(timing)
 
@@ -247,10 +250,21 @@ def run_benchmark(benchmark, model_location, execution_location, thread_percenta
         print(f"ERROR: No successful runs for {benchmark} ({mode})", file=sys.stderr)
         return None
 
-    # Compute averages
-    def avg(key):
+    # Compute statistics
+    def compute_stats(key):
         vals = [t[key] for t in timings if t[key] is not None]
-        return statistics.mean(vals) if vals else None
+        if not vals:
+            return None, None, None, None
+        avg = statistics.mean(vals)
+        mn = min(vals)
+        mx = max(vals)
+        sd = statistics.stdev(vals) if len(vals) >= 2 else 0.0
+        return avg, mn, mx, sd
+
+    exec_avg, exec_min, exec_max, exec_std = compute_stats("execution_time")
+    h2d_avg, h2d_min, h2d_max, h2d_std = compute_stats("transfer_time_h2d")
+    d2h_avg, d2h_min, d2h_max, d2h_std = compute_stats("transfer_time_d2h")
+    total_avg, total_min, total_max, total_std = compute_stats("total_time")
 
     result = {
         "benchmark": benchmark,
@@ -258,9 +272,22 @@ def run_benchmark(benchmark, model_location, execution_location, thread_percenta
         "model_location": model_location,
         "execution_location": execution_location,
         "is_coldstart": cold_start,
-        "avg_total_time": avg("total_time"),
-        "avg_computation_time": avg("compute_time"),
-        "avg_transfer_time": avg("transfer_time"),
+        "avg_execution_time": exec_avg,
+        "min_execution_time": exec_min,
+        "max_execution_time": exec_max,
+        "std_execution_time": exec_std,
+        "avg_transfer_time_h2d": h2d_avg,
+        "min_transfer_time_h2d": h2d_min,
+        "max_transfer_time_h2d": h2d_max,
+        "std_transfer_time_h2d": h2d_std,
+        "avg_transfer_time_d2h": d2h_avg,
+        "min_transfer_time_d2h": d2h_min,
+        "max_transfer_time_d2h": d2h_max,
+        "std_transfer_time_d2h": d2h_std,
+        "avg_total_time": total_avg,
+        "min_total_time": total_min,
+        "max_total_time": total_max,
+        "std_total_time": total_std,
         "thread_percentage": thread_percentage,
         "num_runs": len(timings),
     }
@@ -272,8 +299,12 @@ def write_csv(result, csv_path):
     """Append a result row to the CSV file."""
     fieldnames = [
         "benchmark", "mode", "model_location", "execution_location",
-        "is_coldstart", "avg_total_time", "avg_computation_time",
-        "avg_transfer_time", "thread_percentage", "num_runs",
+        "is_coldstart",
+        "avg_execution_time", "min_execution_time", "max_execution_time", "std_execution_time",
+        "avg_transfer_time_h2d", "min_transfer_time_h2d", "max_transfer_time_h2d", "std_transfer_time_h2d",
+        "avg_transfer_time_d2h", "min_transfer_time_d2h", "max_transfer_time_d2h", "std_transfer_time_d2h",
+        "avg_total_time", "min_total_time", "max_total_time", "std_total_time",
+        "thread_percentage", "num_runs",
     ]
 
     file_exists = os.path.isfile(csv_path)
@@ -294,7 +325,7 @@ def main():
     )
     parser.add_argument(
         "--benchmark", required=True,
-        choices=["bfs", "nn", "leukocyte", "all"],
+        choices=["bfs", "nn", "hotspot3D", "all"],
         help="Which benchmark to run (or 'all')"
     )
     parser.add_argument(
@@ -334,7 +365,7 @@ def main():
 
     args = parser.parse_args()
 
-    benchmarks = ["bfs", "nn", "leukocyte"] if args.benchmark == "all" else [args.benchmark]
+    benchmarks = ["bfs", "nn", "hotspot3D"] if args.benchmark == "all" else [args.benchmark]
 
     for bench in benchmarks:
         cold_str = "cold" if args.cold_start else "warm"
@@ -355,10 +386,21 @@ def main():
 
         if result:
             write_csv(result, args.csv)
-            total = f"{result['avg_total_time']:.6f}s" if result['avg_total_time'] else "N/A"
-            comp = f"{result['avg_computation_time']:.6f}s" if result['avg_computation_time'] else "N/A"
-            xfer = f"{result['avg_transfer_time']:.6f}s" if result['avg_transfer_time'] else "N/A"
-            print(f"  => avg_total={total}  avg_compute={comp}  avg_transfer={xfer}")
+            def fmt_stat(avg_key, std_key, min_key, max_key):
+                a = result[avg_key]
+                if a is None:
+                    return "N/A"
+                s = result[std_key] or 0.0
+                lo = result[min_key] or a
+                hi = result[max_key] or a
+                return f"{a:.6f}s (±{s:.6f}, min={lo:.6f}, max={hi:.6f})"
+            exe = fmt_stat("avg_execution_time", "std_execution_time", "min_execution_time", "max_execution_time")
+            h2d = fmt_stat("avg_transfer_time_h2d", "std_transfer_time_h2d", "min_transfer_time_h2d", "max_transfer_time_h2d")
+            d2h = fmt_stat("avg_transfer_time_d2h", "std_transfer_time_d2h", "min_transfer_time_d2h", "max_transfer_time_d2h")
+            total = fmt_stat("avg_total_time", "std_total_time", "min_total_time", "max_total_time")
+            print(f"  => execution={exe}")
+            print(f"  => h2d={h2d}  d2h={d2h}")
+            print(f"  => total={total}")
             print(f"  => Written to {args.csv}")
         else:
             print(f"  => SKIPPED (errors)")

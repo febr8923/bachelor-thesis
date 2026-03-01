@@ -2,7 +2,7 @@
 # ============================================================================
 # Rodinia Benchmark Runner Script
 #
-# Runs all benchmarks (bfs, nn, leukocyte) across all execution modes:
+# Runs all benchmarks (bfs, nn, hotspot3D) across all execution modes:
 #   - cpu/cpu:  OpenMP (data on CPU, execution on CPU)
 #   - gpu/cpu:  GPU-CPU (data on GPU, execution on CPU)
 #   - cpu/gpu:  Full CUDA (data on CPU, moved to GPU, execution on GPU)
@@ -12,7 +12,7 @@
 # GPU tests iterate over SM percentages via CUDA MPS.
 #
 # Usage: ./run_all.sh [benchmark]
-#   benchmark: bfs, nn, leukocyte, or all (default: all)
+#   benchmark: bfs, nn, hotspot3D, or all (default: all)
 # ============================================================================
 
 set -e
@@ -53,7 +53,7 @@ echo ""
 
 BENCHMARKS_TO_BUILD=()
 if [ "$BENCHMARK" = "all" ]; then
-    BENCHMARKS_TO_BUILD=(bfs nn leukocyte)
+    BENCHMARKS_TO_BUILD=(bfs nn hotspot3D)
 else
     BENCHMARKS_TO_BUILD=("$BENCHMARK")
 fi

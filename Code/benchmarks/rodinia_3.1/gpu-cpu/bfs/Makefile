@@ -9,7 +9,7 @@ EXE = bfs_gpu_cpu
 all: $(EXE)
 
 $(EXE): $(SRC)
-	$(NVCC) -Xcompiler -fopenmp $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR)
+	$(NVCC) -O3 -Xcompiler -fopenmp -Xcompiler -O3 $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR)
 
 clean:
 	rm -f $(EXE) *.linkinfo

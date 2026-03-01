@@ -19,7 +19,7 @@ NR_WARMUP_ITERATIONS = 5
 DEFAULT_MEM_UTIL = 0.85
 DEFAULT_THREAD_PERCENTAGE = 100
 DEFAULT_NR_BATCHES = 1
-DEFAULT_NR_INPUT_TOKENS = 20
+DEFAULT_NR_INPUT_TOKENS = 128
 
 class BenchmarkResult:
 
@@ -41,6 +41,9 @@ class BenchmarkResult:
             "avg_total": [],
             "max_total": [],
             "min_total": [],
+            "avg_load_time": [],
+            "max_load_time": [],
+            "min_load_time": [],
         })
 
     def add_datapoint(self, datapoint):
@@ -54,6 +57,8 @@ class BenchmarkResult:
                        memory_rate, cold_start, model_loc, exec_loc):
         """Convert raw vllm results to datapoint and add to dataframe"""
         n = len(raw_result["ttfts"])
+        load_times = raw_result.get("load_times", [0.0] * n)
+        nl = len(load_times)
         datapoint = pd.DataFrame({
             "nr_input_tokens": [nr_input_tokens],
             "nr_batches": [nr_batches],
@@ -71,6 +76,9 @@ class BenchmarkResult:
             "avg_total": [sum(raw_result["totals"]) / n],
             "max_total": [max(raw_result["totals"])],
             "min_total": [min(raw_result["totals"])],
+            "avg_load_time": [sum(load_times) / nl],
+            "max_load_time": [max(load_times)],
+            "min_load_time": [min(load_times)],
         })
         self.add_datapoint(datapoint)
 
@@ -126,6 +134,41 @@ def run_vllm_cold_iteration(model_name, prompt, nr_output):
     result["total_time"] = load_time + (result.get("ttft", 0))
 
     return result
+
+def run_vllm_cold(model_name, prompt, nr_output, gpu_memory_utilization=None):
+    """Cold-start benchmark: create a fresh LLM for every iteration.
+    Returns the same dict format as run_vllm_warm plus load_times."""
+    ttfts = []
+    throughputs = []
+    totals = []
+    load_times = []
+
+    for i in range(NR_ITERATIONS):
+        print(f"  Cold iteration {i+1}/{NR_ITERATIONS}")
+        torch.cuda.empty_cache()
+        gc.collect()
+
+        # Measure model load time
+        start = timer()
+        if gpu_memory_utilization is not None:
+            llm = LLM(model_name, gpu_memory_utilization=gpu_memory_utilization)
+        else:
+            llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+        end = timer()
+        load_times.append(end - start)
+
+        # Run a single inference (no warmup — that's the point of cold-start)
+        res = run_vllm_iteration(llm, prompt, nr_output)
+        ttfts.append(res["ttft"])
+        throughputs.append(res["throughput"])
+        totals.append(res["total"])
+
+        del llm
+        torch.cuda.empty_cache()
+        gc.collect()
+        time.sleep(0.5)
+
+    return {"ttfts": ttfts, "throughputs": throughputs, "totals": totals, "load_times": load_times}
 
 def run_vllm_warm(llm, prompt, nr_output):
     ttfts = []
@@ -270,7 +313,7 @@ def gpu_benchmark_changing_memory_utilization(model_name, nr_outputs=128, watche
     print("------ Running benchmark_changing_gpu_memory_utilization ------")
     print("")
 
-    prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=4)
+    prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
     result = BenchmarkResult()
     cold_start = False
     exec_loc = "gpu"
@@ -304,6 +347,47 @@ def gpu_benchmark_changing_memory_utilization(model_name, nr_outputs=128, watche
     return result
 
 
+def cpu_benchmark_warm(model_name, nr_outputs=32, watcher=None):
+    """Single-config CPU warm benchmark. Thread count and KV cache size are
+    read from environment variables (set by the shell pipeline)."""
+    print("")
+    print("------ Running cpu_benchmark_warm ------")
+    print("")
+
+    cold_start = False
+    exec_loc = "cpu"
+    model_loc = "cpu"
+
+    num_threads = int(os.environ.get("OMP_NUM_THREADS", "72"))
+    kv_cache = os.environ.get("VLLM_CPU_KVCACHE_SPACE", "4")
+
+    prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name,
+                         nr_batches=DEFAULT_NR_BATCHES)
+    result = BenchmarkResult()
+
+    print(f"OMP_NUM_THREADS={num_threads}, VLLM_CPU_KVCACHE_SPACE={kv_cache}")
+    try:
+        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
+
+        result_i = run_vllm_warm(llm, prompt, nr_outputs)
+        result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS,
+                    nr_batches=DEFAULT_NR_BATCHES,
+                    thread_percentage=num_threads, memory_rate=DEFAULT_MEM_UTIL,
+                    cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
+
+        del llm
+        torch.cuda.empty_cache()
+        gc.collect()
+    except Exception as e:
+        print(f"Failed with {e}")
+        if 'llm' in locals():
+            del llm
+        torch.cuda.empty_cache()
+        gc.collect()
+
+    return result
+
+
 """
 Doesnt work bc of threading issues
 """
@@ -325,7 +409,6 @@ def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=32, watcher=None):
 
     for i in [16, 36, 72]:
         print(f"Nr threads: {i}")
-        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
         try:
             os.environ['OMP_NUM_THREADS'] = f"{i}"
             os.environ['MKL_NUM_THREADS'] = f"{i}"
@@ -334,7 +417,7 @@ def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=32, watcher=None):
 
             result_i = run_vllm_warm(llm, prompt, nr_outputs)
             result.add_raw_result(result_i, nr_input_tokens=DEFAULT_NR_INPUT_TOKENS, nr_batches=DEFAULT_NR_BATCHES, 
-                        thread_percentage=i, memory_rate=100, 
+                        thread_percentage=i, memory_rate=DEFAULT_MEM_UTIL, 
                         cold_start=cold_start, model_loc=model_loc, exec_loc=exec_loc)
 
             del llm
@@ -352,10 +435,13 @@ def cpu_benchmark_changing_nr_threads(model_name, nr_outputs=32, watcher=None):
     return result
 
 def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
-    os.environ['VLLM_CPU_KVCACHE_SPACE'] = "16"
     nr_outputs = 128
     watcher = None
     dir_path = f"results/{model_name}"
+
+    # Hide GPUs so vLLM is forced to use the CPU backend
+    if execution_loc == "cpu":
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     if measure_memory:
         if execution_loc == "gpu":
@@ -369,7 +455,7 @@ def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
         if execution_loc == "gpu":
             res = gpu_benchmark_changing_sm_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         else:
-            res = cpu_benchmark_changing_nr_threads(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+            res = cpu_benchmark_warm(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
     elif mode == 2:
         res = benchmark_changing_batch_size(model_name=model_name, exec_loc=execution_loc, nr_outputs=nr_outputs, watcher=watcher)
@@ -379,7 +465,7 @@ def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
     elif mode == 4:
         if execution_loc == "gpu":
-            res = benchmark_changing_gpu_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+            res = gpu_benchmark_changing_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         else:
             raise ValueError("Benchmark not availble for cpu!")
         res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
@@ -387,7 +473,7 @@ def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
         if execution_loc == "gpu":
             res = gpu_benchmark_changing_sm_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         else:
-            res = cpu_benchmark_changing_thread_percentage(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+            res = cpu_benchmark_warm(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
         res.save_to_csv(dir_path, f"{execution_loc}-1")
 
         res = benchmark_changing_batch_size(model_name=model_name, exec_loc=execution_loc, nr_outputs=nr_outputs, watcher=watcher)
@@ -397,8 +483,17 @@ def run(model_name, execution_loc="gpu", measure_memory=False, mode=1):
         res.save_to_csv(dir_path, f"{execution_loc}-3")
 
         if execution_loc == "gpu":
-            res = benchmark_changing_gpu_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+            res = gpu_benchmark_changing_memory_utilization(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
             res.save_to_csv(dir_path, f"{execution_loc}-4")
+
+    elif mode == 6:
+        # KV cache sweep — identical to mode 1 but saved under mode 6
+        # VLLM_CPU_KVCACHE_SPACE is set by the shell script
+        if execution_loc == "cpu":
+            res = cpu_benchmark_warm(model_name=model_name, nr_outputs=nr_outputs, watcher=watcher)
+        else:
+            raise ValueError("Mode 6 (KV cache sweep) is only available for cpu!")
+        res.save_to_csv(dir_path, f"{execution_loc}-{mode}")
 
     if watcher:
         time.sleep(0.5)
@@ -424,63 +519,7 @@ if __name__ == '__main__':
     if execution_loc == "gpu":
         run(model_name, execution_loc=execution_loc, measure_memory=measure_memory, mode=mode)
     elif execution_loc == "cpu":
-        ttfts = []
-        throughputs = []
-        totals = []
-        dir_path = f"results/{model_name}"
-
-        if measure_memory:
-            watcher = CpuWatcher(id=0, save_loc=f"{dir_path}/cpu-{mode}-memory.csv")
-            watcher.start()
-        
-        prompt = make_prompt(nr_tokens=DEFAULT_NR_INPUT_TOKENS, model_name=model_name, nr_batches=DEFAULT_NR_BATCHES)
-        llm = LLM(model_name, max_num_batched_tokens=2048, max_model_len=2048)
-        nr_output = 16
-
-        for i in range(NR_WARMUP_ITERATIONS):
-                run_vllm_iteration(llm, prompt, nr_output)
-
-        for i in range(NR_ITERATIONS):
-            res = run_vllm_iteration(llm, prompt, nr_output)
-            ttfts.append(res["ttft"])
-            throughputs.append(res["throughput"])
-            totals.append(res["total"])
-            #
-        
-        if measure_memory:
-            watcher.stop()
-        """
-        DEFAULT_MEM_UTIL = 0.85
-        DEFAULT_THREAD_PERCENTAGE = 100
-        DEFAULT_NR_BATCHES = 1
-        DEFAULT_NR_INPUT_TOKENS = 20
-        """
-        n = len(ttfts)
-        df = pd.DataFrame({
-            "nr_input_tokens": [DEFAULT_NR_INPUT_TOKENS],
-            "nr_batches": [DEFAULT_NR_BATCHES],
-            "thread_percentage": [DEFAULT_THREAD_PERCENTAGE],
-            "memory_rate": [DEFAULT_MEM_UTIL],
-            "cold_start": [is_cold_start],
-            "model_loc": [execution_loc],
-            "exec_loc": [execution_loc],
-            "avg_ttft": [sum(ttfts) / n],
-            "max_ttft": [max(ttfts)],
-            "min_ttft": [min(ttfts)],
-            "avg_throughput": [sum(throughputs) / n],
-            "max_throughput": [max(throughputs)],
-            "min_throughput": [min(throughputs)],
-            "avg_total": [sum(totals) / n],
-            "max_total": [max(totals)],
-            "min_total": [min(totals)],
-        })
-
-        dir_path = f"results/{model_name}"
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        file_path = f"{dir_path}/{execution_loc}-{mode}-{is_cold_start}.csv"
-        df.to_csv(file_path, mode='a', header=False, index=False)
+        run(model_name, execution_loc=execution_loc, measure_memory=measure_memory, mode=mode)
 
 """
 if __name__ == "__main__":

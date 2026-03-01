@@ -143,15 +143,15 @@ int main(int argc, char* argv[])
     * Execute kernel
     */
     euclid<<< gridDim, threadsPerBlock >>>(d_locations,d_distances,numRecords,lat,lng);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
+    gettimeofday(&t_end, NULL);
 
     //Copy data from device memory to host memory
     cudaMemcpy( distances, d_distances, sizeof(float)*numRecords, cudaMemcpyDeviceToHost );
 
 	// ===================== STOP TIMER =====================
-	cudaDeviceSynchronize();
-	gettimeofday(&t_end, NULL);
-	double total_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
+
+	double execution_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
 
 	// find the resultsCount least distances
     findLowest(records,distances,numRecords,resultsCount);
@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
     }
 
 	printf("\n===== GPU-GPU Execution Timing =====\n");
-	printf("Total time (kernel + D2H only): %lf seconds\n", total_time);
+	printf("Execution time: %lf seconds\n", execution_time);
 
     free(distances);
     //Free memory

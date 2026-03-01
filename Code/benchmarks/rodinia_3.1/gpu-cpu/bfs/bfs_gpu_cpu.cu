@@ -10,8 +10,6 @@
 #include <cuda.h>
 #include <omp.h>
 
-#define MAX_THREADS_PER_BLOCK 512
-
 FILE *fp;
 
 //Structure to hold a node information
@@ -198,8 +196,8 @@ void BFSGraph( int argc, char** argv)
 	// ===================== PRINT TIMING RESULTS =====================
 	printf("\n===== GPU-CPU Execution Timing =====\n");
 	printf("Data transfer time (D2H): %lf seconds\n", transfer_end_time - transfer_start_time);
-	printf("Computation time (CPU):   %lf seconds\n", compute_end_time - compute_start_time);
-	printf("Total time:               %lf seconds\n", total_end_time - total_start_time);
+	printf("Execution time: %lf seconds\n", compute_end_time - compute_start_time);
+	printf("Total time: %lf seconds\n", total_end_time - total_start_time);
 
 	//Store the result into a file
 	FILE *fpo = fopen("result.txt","w");

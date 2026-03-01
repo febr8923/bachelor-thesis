@@ -172,7 +172,8 @@ void BFSGraph( int argc, char** argv)
 #ifdef OPEN
         double end_time = omp_get_wtime();
 		double total_end_time = omp_get_wtime();
-        printf("Compute time: %lf\n", (end_time - start_time));
+        printf("\n===== OpenMP Execution Timing =====\n");
+        printf("Execution time: %lf seconds\n", (end_time - start_time));
 #ifdef OMP_OFFLOAD
         }
 #endif
@@ -183,9 +184,6 @@ void BFSGraph( int argc, char** argv)
 		fprintf(fpo,"%d) cost:%d\n",i,h_cost[i]);
 	fclose(fpo);
 	printf("Result stored in result.txt\n");
-#ifdef OPEN
-	printf("Total time: %lf\n", (total_end_time - total_start_time));
-#endif
 
 
 	// cleanup memory

@@ -187,16 +187,16 @@ void BFSGraph( int argc, char** argv)
 
 	printf("Kernel Executed %d times\n",k);
 
-	// copy result from device to host
-	cudaMemcpy( h_cost, d_cost, sizeof(int)*no_of_nodes, cudaMemcpyDeviceToHost) ;
-
 	// ===================== STOP TIMER =====================
 	cudaDeviceSynchronize();
 	gettimeofday(&t_end, NULL);
-	double total_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
+	double execution_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
+
+	// copy result from device to host (not timed — just to retrieve results)
+	cudaMemcpy( h_cost, d_cost, sizeof(int)*no_of_nodes, cudaMemcpyDeviceToHost) ;
 
 	printf("\n===== GPU-GPU Execution Timing =====\n");
-	printf("Total time (kernel + D2H only): %lf seconds\n", total_time);
+	printf("Execution time: %lf seconds\n", execution_time);
 
 	//Store the result into a file
 	FILE *fpo = fopen("result.txt","w");

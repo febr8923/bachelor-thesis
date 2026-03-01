@@ -96,13 +96,13 @@ int main(int argc, char* argv[])
 	// Scaling calculations - added by Sam Kauffman
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties( &deviceProp, 0 );
-	cudaThreadSynchronize();
+	cudaDeviceSynchronize();
 	unsigned long maxGridX = deviceProp.maxGridSize[0];
 	unsigned long threadsPerBlock = min( deviceProp.maxThreadsPerBlock, DEFAULT_THREADS_PER_BLOCK );
 	size_t totalDeviceMemory;
 	size_t freeDeviceMemory;
 	cudaMemGetInfo(  &freeDeviceMemory, &totalDeviceMemory );
-	cudaThreadSynchronize();
+	cudaDeviceSynchronize();
 	unsigned long usableDeviceMemory = freeDeviceMemory * 85 / 100; // 85% arbitrary throttle to compensate for known CUDA bug
 	unsigned long maxThreads = usableDeviceMemory / 12; // 4 bytes in 3 vectors per thread
 	if ( numRecords > maxThreads )
@@ -130,9 +130,6 @@ int main(int argc, char* argv[])
 		print( gridX );
 	}
 
-	struct timeval t_start, t_end;
-	gettimeofday(&t_start, NULL);
-
 	/**
 	* Allocate memory on host and device
 	*/
@@ -140,36 +137,46 @@ int main(int argc, char* argv[])
 	cudaMalloc((void **) &d_locations,sizeof(LatLong) * numRecords);
 	cudaMalloc((void **) &d_distances,sizeof(float) * numRecords);
 
-   /**
-    * Transfer data from host to device
-    */
-    cudaMemcpy( d_locations, &locations[0], sizeof(LatLong) * numRecords, cudaMemcpyHostToDevice);
+	// ===================== TIMED: H2D Transfer =====================
+	struct timeval t_h2d_start, t_h2d_end;
+	gettimeofday(&t_h2d_start, NULL);
+	cudaMemcpy( d_locations, &locations[0], sizeof(LatLong) * numRecords, cudaMemcpyHostToDevice);
+	gettimeofday(&t_h2d_end, NULL);
+	double h2d_time = (t_h2d_end.tv_sec - t_h2d_start.tv_sec) + (t_h2d_end.tv_usec - t_h2d_start.tv_usec) / 1000000.0;
 
-    /**
-    * Execute kernel
-    */
-    euclid<<< gridDim, threadsPerBlock >>>(d_locations,d_distances,numRecords,lat,lng);
-    cudaThreadSynchronize();
+	// ===================== TIMED: Kernel Execution =====================
+	struct timeval t_exec_start, t_exec_end;
+	cudaDeviceSynchronize();
+	gettimeofday(&t_exec_start, NULL);
+	euclid<<< gridDim, threadsPerBlock >>>(d_locations,d_distances,numRecords,lat,lng);
+	cudaDeviceSynchronize();
+	gettimeofday(&t_exec_end, NULL);
+	double execution_time = (t_exec_end.tv_sec - t_exec_start.tv_sec) + (t_exec_end.tv_usec - t_exec_start.tv_usec) / 1000000.0;
 
-    //Copy data from device memory to host memory
-    cudaMemcpy( distances, d_distances, sizeof(float)*numRecords, cudaMemcpyDeviceToHost );
+	// ===================== TIMED: D2H Transfer =====================
+	struct timeval t_d2h_start, t_d2h_end;
+	gettimeofday(&t_d2h_start, NULL);
+	cudaMemcpy( distances, d_distances, sizeof(float)*numRecords, cudaMemcpyDeviceToHost );
+	gettimeofday(&t_d2h_end, NULL);
+	double d2h_time = (t_d2h_end.tv_sec - t_d2h_start.tv_sec) + (t_d2h_end.tv_usec - t_d2h_start.tv_usec) / 1000000.0;
 
 	// find the resultsCount least distances
-    findLowest(records,distances,numRecords,resultsCount);
+	findLowest(records,distances,numRecords,resultsCount);
 
-    // print out results
-    if (!quiet)
-    for(i=0;i<resultsCount;i++) {
-      printf("%s --> Distance=%f\n",records[i].recString,records[i].distance);
-    }
-    free(distances);
-    //Free memory
+	// print out results
+	if (!quiet)
+	for(i=0;i<resultsCount;i++) {
+		printf("%s --> Distance=%f\n",records[i].recString,records[i].distance);
+	}
+	free(distances);
+	//Free memory
 	cudaFree(d_locations);
 	cudaFree(d_distances);
 
-	gettimeofday(&t_end, NULL);
-	double total_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
-	printf("Total time: %lf\n", total_time);
+	printf("\n===== CUDA Execution Timing =====\n");
+	printf("Data transfer time (H2D): %lf seconds\n", h2d_time);
+	printf("Execution time: %lf seconds\n", execution_time);
+	printf("Data transfer time (D2H): %lf seconds\n", d2h_time);
 
 }
 

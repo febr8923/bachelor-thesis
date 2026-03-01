@@ -17,7 +17,7 @@
 
 #define MAX_ARGS 10
 #define REC_LENGTH 49	// size of a record in db
-#define REC_WINDOW 10	// number of records to read at a time
+#define REC_WINDOW 1000	// number of records to read at a time
 #define LATITUDE_POS 28	// location of latitude coordinates in input record
 #define OPEN 10000	// initial value of nearest neighbors
 
@@ -78,8 +78,11 @@ int main(int argc, char* argv[]) {
 	// ===================== GPU MEMORY ALLOCATION =====================
 	char *d_sandbox;
 	float *d_z;
+	struct neighbor *d_neighbors;
+
 	cudaMalloc((void **) &d_sandbox, REC_LENGTH * REC_WINDOW);
 	cudaMalloc((void **) &d_z, REC_WINDOW * sizeof(float));
+	cudaMalloc((void **) &d_neighbors, k * sizeof(struct neighbor));
 
 	// ===================== START TIMERS =====================
 	double total_start_time = omp_get_wtime();
@@ -113,12 +116,17 @@ int main(int argc, char* argv[]) {
 				exit(0);
 			}
 		}
+		// ===================== COPY HOST -> DEVICE =====================
+		cudaMemcpy(d_sandbox, sandbox, REC_LENGTH * rec_count, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_z, z, rec_count * sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(d_neighbors, neighbors, k * sizeof(struct neighbor), cudaMemcpyHostToDevice);
 
-		// ===================== GPU ROUND-TRIP (H2D then D2H) =====================
+		// ===================== (D2H) =====================
 		double t0 = omp_get_wtime();
 
-		cudaMemcpy(d_sandbox, sandbox, REC_LENGTH * rec_count, cudaMemcpyHostToDevice);
 		cudaMemcpy(sandbox, d_sandbox, REC_LENGTH * rec_count, cudaMemcpyDeviceToHost);
+		cudaMemcpy(z, d_z, rec_count * sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy(neighbors, d_neighbors, k * sizeof(struct neighbor), cudaMemcpyDeviceToHost);
 
 		double t1 = omp_get_wtime();
 		transfer_time_accum += (t1 - t0);
@@ -168,14 +176,15 @@ int main(int argc, char* argv[]) {
 	// ===================== PRINT TIMING RESULTS =====================
 	printf("\n===== GPU-CPU Execution Timing =====\n");
 	printf("Data transfer time (D2H): %lf seconds\n", transfer_time_accum);
-	printf("Computation time (CPU):   %lf seconds\n", compute_time_accum);
-	printf("Total time:               %lf seconds\n", total_end_time - total_start_time);
+	printf("Execution time: %lf seconds\n", compute_time_accum);
+	printf("Total time: %lf seconds\n", total_end_time - total_start_time);
 
 	// cleanup
 	free(neighbors);
 	free(z);
 	cudaFree(d_sandbox);
 	cudaFree(d_z);
+	cudaFree(d_neighbors);
 
 	return 0;
 }

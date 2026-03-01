@@ -1,0 +1,56 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import argparse
+
+path = argparse.ArgumentParser()
+path.add_argument('--csv', type=str, required=False, default='results/alexnet/cpu-1-memory.csv',
+                  help='Path to CSV file with CPU and memory usage data')
+args = path.parse_args()
+file = args.csv
+
+df = pd.read_csv(file)
+df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+start_time = df['timestamp'].min()
+df['relative_time_s'] = (df['timestamp'] - start_time).dt.total_seconds()
+
+df_util = df[['relative_time_s', 'gpu_util%', 'mem_util%']].melt(
+    id_vars='relative_time_s', 
+    value_vars=['gpu_util%', 'mem_util%'],
+    var_name='metric', value_name='value'
+)
+
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=df_util, x='relative_time_s', y='value', hue='metric', 
+             palette='Set1', linewidth=1.5)
+plt.title('GPU/Memory util aggregated with max in %', fontsize=16, fontweight='bold')
+plt.xlabel('Time (seconds from start)', fontsize=12)
+plt.ylabel('Utilization %', fontsize=12)
+plt.grid(True, alpha=0.3)
+plt.legend(title='Metrics', title_fontsize=11, fontsize=10)
+plt.tight_layout()
+
+plt.savefig('gpu_relative.png', dpi=150, bbox_inches='tight', facecolor='white')
+
+# PLOT 2: Memory values (MB scale)
+df_mem = df[['relative_time_s', 'mem_total_mb', 'mem_free_mb', 
+                     'mem_used_mb', 'mem_reserved_mb']].melt(
+    id_vars='relative_time_s', 
+    value_vars=['mem_total_mb', 'mem_free_mb', 'mem_used_mb', 'mem_reserved_mb'],
+    var_name='metric', value_name='value'
+)
+
+plt.figure(figsize=(12, 6))
+sns.lineplot(data=df_mem, x='relative_time_s', y='value', hue='metric', 
+             palette='Set2', linewidth=1.5)
+plt.title('GPU Memory aggregated with max', fontsize=16, fontweight='bold')
+plt.xlabel('Time (seconds from start)', fontsize=12)
+plt.ylabel('Memory (MB)', fontsize=12)
+plt.grid(True, alpha=0.3)
+plt.legend(title='Metrics', title_fontsize=11, fontsize=10)
+plt.tight_layout()
+
+# Save memory plot
+plt.savefig('gpu_absolute.png', dpi=150, bbox_inches='tight', facecolor='white')
+

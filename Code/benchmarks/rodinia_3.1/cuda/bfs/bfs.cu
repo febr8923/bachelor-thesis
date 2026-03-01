@@ -134,6 +134,20 @@ void BFSGraph( int argc, char** argv)
 
 	printf("Read File\n");
 
+	// allocate mem for the result on host side
+	int* h_cost = (int*) malloc( sizeof(int)*no_of_nodes);
+	for(int i=0;i<no_of_nodes;i++)
+		h_cost[i]=-1;
+	h_cost[source]=0;
+
+	// allocate device memory for result
+	int* d_cost;
+	cudaMalloc( (void**) &d_cost, sizeof(int)*no_of_nodes);
+	cudaMemcpy( d_cost, h_cost, sizeof(int)*no_of_nodes, cudaMemcpyHostToDevice) ;
+
+	struct timeval t_start_copy, t_end_copy;
+	gettimeofday(&t_start_copy, NULL);
+
 	//Copy the Node list to device memory
 	Node* d_graph_nodes;
 	cudaMalloc( (void**) &d_graph_nodes, sizeof(Node)*no_of_nodes) ;
@@ -158,21 +172,13 @@ void BFSGraph( int argc, char** argv)
 	cudaMalloc( (void**) &d_graph_visited, sizeof(bool)*no_of_nodes) ;
 	cudaMemcpy( d_graph_visited, h_graph_visited, sizeof(bool)*no_of_nodes, cudaMemcpyHostToDevice) ;
 
-	// allocate mem for the result on host side
-	int* h_cost = (int*) malloc( sizeof(int)*no_of_nodes);
-	for(int i=0;i<no_of_nodes;i++)
-		h_cost[i]=-1;
-	h_cost[source]=0;
-	
-	// allocate device memory for result
-	int* d_cost;
-	cudaMalloc( (void**) &d_cost, sizeof(int)*no_of_nodes);
-	cudaMemcpy( d_cost, h_cost, sizeof(int)*no_of_nodes, cudaMemcpyHostToDevice) ;
-
 	//make a bool to check if the execution is over
 	bool *d_over;
 	cudaMalloc( (void**) &d_over, sizeof(bool));
 
+	gettimeofday(&t_end_copy, NULL);
+	double total_time_copy = (t_end_copy.tv_sec - t_start_copy.tv_sec) + (t_end_copy.tv_usec - t_start_copy.tv_usec) / 1000000.0;
+ 
 	printf("Copied Everything to GPU memory\n");
 
 	// setup execution parameters
@@ -206,13 +212,21 @@ void BFSGraph( int argc, char** argv)
 
 
 	printf("Kernel Executed %d times\n",k);
+	cudaDeviceSynchronize();
+	gettimeofday(&t_end, NULL);
+	double execution_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
 
 	// copy result from device to host
+	struct timeval t_d2h_start, t_d2h_end;
+	gettimeofday(&t_d2h_start, NULL);
 	cudaMemcpy( h_cost, d_cost, sizeof(int)*no_of_nodes, cudaMemcpyDeviceToHost) ;
+	gettimeofday(&t_d2h_end, NULL);
+	double d2h_time = (t_d2h_end.tv_sec - t_d2h_start.tv_sec) + (t_d2h_end.tv_usec - t_d2h_start.tv_usec) / 1000000.0;
 
-	gettimeofday(&t_end, NULL);
-	double total_time = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec) / 1000000.0;
-	printf("Total time: %lf\n", total_time);
+	printf("\n===== CUDA Execution Timing =====\n");
+	printf("Data transfer time (H2D): %lf seconds\n", total_time_copy);
+	printf("Execution time: %lf seconds\n", execution_time);
+	printf("Data transfer time (D2H): %lf seconds\n", d2h_time);
 
 	//Store the result into a file
 	FILE *fpo = fopen("result.txt","w");
